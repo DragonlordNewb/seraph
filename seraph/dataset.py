@@ -134,16 +134,20 @@ class Dataset(utils.Summarizable):
 
         return output
     
-    def vary(self, variance: int=1, indexBlacklist: list[int]=[], elementBlacklist: list[Element]=[], ageIncrement: int=1) -> object:
+    def vary(self, variance: int=1, indexBlacklist: list[int]=[], elementBlacklist: list[Element]=[], forceInject: list[Element]=[], ageIncrement: int=1) -> object:
         indices = self.parentDataset.randomUniqueIndices(variance, indexBlacklist)
         elements = self.parentDataset.randomUniqueElements(variance, elementBlacklist)
         
         for index, element in zip(indices, elements):
             self.replaceIndex(index, element, ageIncrement)
 
+        indices = self.parentDataset.randomUniqueIndices(len(forceInject))
+        for index, element in zip(indices, forceInject):
+            self.replaceIndex(index, element, ageIncrement)
+
         return self
     
-    def generateVariants(self, length: int or None=None, n: int=1, variance: int=1, indexBlacklist: list[int]=[], elementBlacklist: list[Element]=[]) -> list[object]:
+    def generateVariants(self, length: int or None=None, n: int=1, variance: int=1, indexBlacklist: list[int]=[], elementBlacklist: list[Element]=[], forceInject: list[Element]=[]) -> list[object]:
         if length == None:
             length = len(self)
         
