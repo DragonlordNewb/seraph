@@ -2,6 +2,8 @@
 # PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION
 # OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
 
+import random
+
 from seraph import dataset
 from seraph import utils
 from seraph.common import *
@@ -92,9 +94,19 @@ class Phylogeny(utils.Summarizable, utils.Makeable):
         for daughter in daughters:
             self.daughterPhylogenies.append(Phylogeny(daughter, self))
 
-    def generateVariants(self, length: int or None=None, n: int=1, variance: int=1, indexBlacklist: list[int]=[], elementBlacklist: list[Element]=[]) -> list[object]:
+    def generateVariants(self, 
+            length: int or None=None, 
+            n: int=1, 
+            variance: int=1, 
+            indexBlacklist: list[int]=[], 
+            elementBlacklist: list[Element]=[], 
+            simulation: object or None=None) -> list[object]:
         daughters = self.agent.generateVariants(length, n, variance, indexBlacklist, elementBlacklist)
         self.assignDaughterAgents(*daughters)
+        if simulation:
+            for daughter in self.daughterPhylogenies:
+                if daughter.agent in daughters:
+                    simulation.phylogenies.append(daughter)
         return daughters
     
     def summary(self) -> str:
@@ -153,3 +165,5 @@ class Simulation:
 
     def evolve(self, variance: int) -> None:
         if self._firstEvolution:
+            for phylogeny in self:
+                phylogeny.
