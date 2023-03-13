@@ -216,6 +216,13 @@ class Simulation:
             raise StopIteration
         return self.phylogenies[n]
 
+    def getElements(self) -> list[dataset.Element]:
+        output = []
+        for phylogeny in self:
+            for element in phylogeny.agent.dataset:
+                output.append(element)
+        return list(set(output))
+
     def buffer(self, *forceInject: list[list[dataset.Element]]):
         for injection in forceInject:
             self.forceInjectionBuffer.append(injection)
@@ -258,8 +265,15 @@ class Simulation:
     
     def currentBest(self) -> Phylogeny: # make this work for any data type requested please!
         best = self.phylogenies[0]
-        for phylogeny in self.phylogenies:
+        for phylogeny in self:
             if phylogeny.score > best.score:
+                best = phylogeny
+        return best
+
+    def currentRelativeBest(self) -> Phylogeny:
+        best = self.phylogenies[0]
+        for phylogeny in self:
+            if phylogeny.relativeScore > best.relativeScore:
                 best = phylogeny
         return best
 
