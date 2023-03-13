@@ -332,3 +332,6 @@ class Simulation:
             if achieved:
                 return True, phylogeny
         return False, None
+
+    def maximize(self, n: int=1000) -> any:
+        pass
