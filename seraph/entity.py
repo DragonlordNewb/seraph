@@ -3,6 +3,14 @@ import math
 from seraph import utils
 
 delta = lambda leniency: lambda a, b: math.e ** (-1 * math.pi * (((a - b) / leniency) ** 2))
+def mean(*data: list[int]) -> int:
+    if len(data) == 1 and type(data[0]) == list:
+        data = data[0]
+
+    return sum(data) / len(data)
+
+def standardDeviation():
+    pass
 
 class Property(utils.Summarizable, utils.Makeable):
     intEnabled = False
@@ -80,4 +88,4 @@ class MetalistProperty(Property):
     lenEnabled = True
 
     def similarity(self, other: Property) -> int:
-        
+        pass
