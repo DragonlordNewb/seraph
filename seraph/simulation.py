@@ -101,9 +101,17 @@ class Simulation:
     def __init__(self, *foundations: list[Agent or Phylogeny], scoringFunction: utils.function or None=None) -> None:
         self.foundations = foundations
 
-        if (not hasattr(self, "scoringFunction")) and (function != None):
+        if (not hasattr(self, "scoringFunction")) and (scoringFunction != None):
             self.scoringFunction = scoringFunction
         elif hasattr(self, "scoringFunction") and (scoringFunction != None):
             raise SyntaxError("Cannot both subclass a \"scoringFunction\" method and supply one at init.")
         elif (not hasattr(self, "scoringFunction")) and (scoringFunction == None):
             raise SyntaxError("Must either subclass a \"scoringFunction\" method or supply one at init.")
+        
+    def score(self, item: Phylogeny or Agent) -> int:
+        if type(item) == Phylogeny:
+            return self.scoringFunction(item.agent)
+        elif type(item) == Agent:
+            return self.scoringFunction(item)
+        else:
+            raise TypeError("Can only score Phylogeny or Agent objects, not " + str(item.__name__) + ".")
