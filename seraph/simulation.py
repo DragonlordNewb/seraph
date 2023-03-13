@@ -7,7 +7,7 @@ from seraph import utils
 from seraph.common import *
 
 class Agent(utils.Makeable):
-    def __init__(self, dataset: dataset.Dataset or list, function: utils.function or None=None, parentAgent: object=None, parentPhylogeny: object or None=None) -> None:
+    def __init__(self, dataset: dataset.Dataset or list, function: utils.function or None=None, parentAgent: object or None=None, parentPhylogeny: object or None=None) -> None:
         if type(dataset) == list:
             dataset = dataset.Dataset.make(dataset)
 
@@ -62,6 +62,7 @@ class Phylogeny(utils.Summarizable, utils.Makeable):
         self.daughterPhylogenies = []
 
         self.score = UNKNOWN
+        self.relativeScore = UNKNOWN
 
     def __repr__(self) -> str:
         return "<seraph.Phylogeny agent=" + str(self.agent) +  " with " + str(len(self)) + " daughter phylogenies>"
@@ -78,6 +79,14 @@ class Phylogeny(utils.Summarizable, utils.Makeable):
         if self.n >= len(self):
             raise StopIteration
         return self.daughterPhylogenies[n]
+
+    def score(self, n: int) -> int:
+        parentScore = self.parentPhylogeny.score
+        self.score = n
+        self.relativeScore = self.score - self.parentPhylogeny.score
+        for element in self.agent.dataset:
+            element.relativeScore = self.relativeScore
+        return self.relativeScore
 
     def assignDaughterAgents(self, *daughters: list[Agent]) -> None:
         for daughter in daughters:
@@ -99,7 +108,17 @@ class Phylogeny(utils.Summarizable, utils.Makeable):
 
 class Simulation:
     def __init__(self, *foundations: list[Agent or Phylogeny], scoringFunction: utils.function or None=None) -> None:
-        self.foundations = foundations
+        for index, item in enumerate(foundations):
+            if type(item) == Agent:
+                foundations[index] = Phylogeny.make(item)
+            elif type(item) == Phylogeny:
+                pass
+            else:
+                raise TypeError("Can only supply Phylogeny or Agent objects to Simulation at init.")
+
+        self.phylogenies = foundations
+
+        self._firstEvolution = True
 
         if (not hasattr(self, "scoringFunction")) and (scoringFunction != None):
             self.scoringFunction = scoringFunction
@@ -107,11 +126,30 @@ class Simulation:
             raise SyntaxError("Cannot both subclass a \"scoringFunction\" method and supply one at init.")
         elif (not hasattr(self, "scoringFunction")) and (scoringFunction == None):
             raise SyntaxError("Must either subclass a \"scoringFunction\" method or supply one at init.")
-        
+
+    def __len__(self) -> int:
+        return len(self.phylogenies)
+    
+    def __iter__(self) -> object:
+        self.n = -1
+
+    def __next__(self) -> Phylogeny:
+        self.n += 1
+        if n >= len(self):
+            raise StopIteration
+        return self.phylogenies[n]
+
     def score(self, item: Phylogeny or Agent) -> int:
         if type(item) == Phylogeny:
-            return self.scoringFunction(item.agent)
+            s = self.scoringFunction(item.agent)
+            item.score(s)
+            return s
         elif type(item) == Agent:
-            return self.scoringFunction(item)
+            s = self.scoringFunction(item)
+            item.parentPhylogeny.score(s)
+            return s
         else:
             raise TypeError("Can only score Phylogeny or Agent objects, not " + str(item.__name__) + ".")
+
+    def evolve(self, variance: int) -> None:
+        if self._firstEvolution:

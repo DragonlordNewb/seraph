@@ -5,11 +5,14 @@
 import random
 
 from seraph import utils
+from seraph.common import *
 
 class Element(utils.Summarizable, utils.Makeable):
     def __init__(self, value: any, age: int=1) -> None:
         self.value = value
         self.age = age
+
+        self.relativeScore = UNKNOWN
 
     def __repr__(self) -> str:
         return "<seraph.Element " + repr(self.value) + ", age " + str(self.age) + ">"
@@ -59,6 +62,9 @@ class Dataset(utils.Summarizable):
         if self.n >= len(self):
             raise StopIteration
         return self.elements[self.n]
+
+    def __add__(self, other: object) -> object:
+        return Dataset(*(self.elements + other.elements))
     
     def summary(self) -> str:
         output = "Dataset of length " + str(len(self)) + ":\n"
@@ -147,6 +153,16 @@ class Dataset(utils.Summarizable):
             variant.vary(variance, indexBlacklist, elementBlacklist)
             output.append(variant)
         return output
+
+    @staticmethod
+    def sum(self, other: object) -> object:
+        return self + other
+
+    @staticmethod
+    def delta(self, other: object) -> list[Element]:
+        diff1 = [element for element in self if element not in other]
+        diff2 = [element for element in other if element not in self]
+        return list(set(diff1 + diff2))
     
     @classmethod
     def make(cls, *elements: list[any or Element], parentDataset: any=None) -> object:
