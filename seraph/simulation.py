@@ -208,6 +208,7 @@ class Simulation:
     
     def __iter__(self) -> object:
         self.n = -1
+        return self
 
     def __next__(self) -> Phylogeny:
         self.n += 1
