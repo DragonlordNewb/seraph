@@ -22,7 +22,7 @@ class Differentiable:
     def __matmul__(self, other: object) -> int:
         return self.difference(object)
 
-class Property(utils.Summarizable, Differentiable):
+class Property(utils.Summarizable, utils.Manufacturable, Differentiable):
     isProperty = True
     intEnabled = False
     strEnabled = False
@@ -155,6 +155,9 @@ class Entity(utils.Summarizable, utils.Makeable, Differentiable):
             return self.properties[identifiers[0]]
         return [prop for prop in self if type(prop) in identifiers]
 
+    def __eq__(self, other: object) -> bool:
+        return self % other >= self.strictness
+
     def __mod__(self, other: object) -> int:
         return self.similarity(other)
 
@@ -231,3 +234,21 @@ class Classifier(utils.Summarizable, utils.Makeable):
     def highestSimilarity(self, entity: Entity) -> Entity:
         ebs = self.entitiesBySimilarity(entity)
         return max(ebs.keys())
+
+class HeuristicDataMap(Classifier):
+    def __init__(self, data: dict[Entity: any], strictness: int=.8, selfImprove: bool=False) -> None:
+        Classifier.__init__(self, *list(data.keys()), strictness=strictness, selfImprove=selfImprove)
+        self.data = data
+
+    def __repr__(self) -> str:
+        return "<seraph.HeuristicDataMap of length " + str(len(self)) + ">"
+    
+    def __rshift__(self, entity: Entity) -> any:
+        if entity in self:
+            mse = self.mostSimilarEntity(entity)
+            return self.data[mse]
+        return None
+    
+    def __lshift__(self, entity: Entity) -> any:
+        if entity not in self:
+            self += entity

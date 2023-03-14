@@ -216,3 +216,8 @@ class Makeable:
 		return cls(*args, **kwargs)
 	
 function = type(combineLists)
+
+class Manufacturable:
+	@classmethod
+	def manufacture(cls, *args):
+		return tuple([cls(x) for x in args])
