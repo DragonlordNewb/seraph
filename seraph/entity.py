@@ -215,3 +215,4 @@ class Classifier(utils.Summarizable, utils.Makeable):
     def highestSimilarity(self, entity: Entity) -> Entity:
         ebs = self.entitiesBySimilarity(entity)
         return max(ebs.keys())
+
