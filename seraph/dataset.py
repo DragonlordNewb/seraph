@@ -79,6 +79,10 @@ class Dataset(utils.Summarizable):
     def add(self, element: any) -> None:
         self.elements.append(element)
 
+    def elementsByRelativeScore(self) -> list[Element]:
+        self.elements.sort(key=lambda element: element.relativeScore, reverse=True)
+        return self.elements
+
     def replaceIndex(self, index: int, element: any, ageIncrement: int=0) -> None:
         element.increaseAge(ageIncrement)
         self.elements[index] = element
@@ -179,3 +183,39 @@ class Dataset(utils.Summarizable):
                 continue
             elems.append(Element.make(element))
         return cls(*[x for x in elems if x != None], parentDataset)
+
+    @classmethod
+    def stochasticallyBreed(cls, parent1: object, parent2: object, length: int=0, mode: DELTA or ABSOLUTE=DELTA) -> object:
+        assert len(parent1) == len(parent2), "Can only breed parents of equal length."
+
+        if mode == DELTA:
+            length += len(parent1)
+        
+        if length % 2:
+            warnings.warn("Breeding of odd-lengthed parents is not allowed; an element will be dropped.", UnsafeValueWarning)
+
+        num = math.floor(len(parent1)) # and thereby also math.floor(len(parent2)) if the above assertion holds
+
+        elements1 = parent1.randomUniqueElements(num, ageIncrement=1)
+        elements2 = parent2.randomUniqueElements(num, ageIncrement=1)
+
+        return cls(elements1 + elements2, parent1)
+
+    @classmethod
+    def eugenicallyBreed(cls, parent1: object, parent2: object, length: int=0, mode: DELTA or ABSOLUTE=DELTA) -> object:
+        assert len(parent1) == len(parent2), "Can only breed parents of equal length."
+
+        if mode == DELTA:
+            length += len(parent1)
+        
+        if length % 2:
+            warnings.warn("Breeding of odd-lengthed parents is not allowed; an element will be dropped.", UnsafeValueWarning)
+
+        num = math.floor(len(parent1)) # and thereby also math.floor(len(parent2)) if the above assertion holds
+
+        elements1 = parent1.elementsByRelativeScore()[:length]
+        elements2 = parent2.elementsByRelativeScore()[:length]
+
+        return cls(elements1 + elements2, parent1)
+
+    

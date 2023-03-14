@@ -1,6 +1,9 @@
 import math
+import warnings
 
 from seraph import utils
+from seraph import dataset 
+from seraph.common import *
 
 delta = lambda leniency: lambda a, b: math.e ** (-1 * math.pi * (((a - b) / leniency) ** 2))
 def mean(*data: list[int]) -> int:
@@ -88,4 +91,27 @@ class MetalistProperty(Property):
     lenEnabled = True
 
     def similarity(self, other: Property) -> int:
-        pass
+        return sum([i1 % i2 for i1, i2 in zip(self, other)])
+
+class Entity(dataset.Dataset, MetalistProperty):
+    def __init__(self, value: any, leniency: int=1, age: int=1):
+        MetalistProperty.__init__(self, value, leniency)
+
+    def __eq__(self, other: object) -> bool:
+        return self.similarity(other) >= self.leniency
+
+    @classmethod
+    def stochasticallyBreed(cls, parent1: object, parent2: object, length: int=0, mode: DELTA or ABSOLUTE=DELTA) -> object:
+        assert len(parent1) == len(parent2), "Can only breed parents of equal length."
+
+        if mode == DELTA:
+            length += len(parent1)
+        
+        if length % 2:
+            warnings.warn("Breeding of odd-lengthed parents is not allowed; an element will be dropped.", UnsafeValueWarning)
+
+        num = math.floor(len(parent1)) # and thereby also math.floor(len(parent2)) if the above assertion holds
+
+
+
+        
