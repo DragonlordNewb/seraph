@@ -45,7 +45,7 @@ class Agent(utils.Makeable):
             variance: int=1, 
             indexBlacklist: list[int]=[], 
             elementBlacklist: list[dataset.Element]=[],
-            forceInject: list[Element]=[], 
+            forceInject: list[dataset.Element]=[], 
             ageIncrement: int=1) -> object:
         self.dataset.vary(variance, indexBlacklist, elementBlacklist, forceInject, ageIncrement)
 
@@ -53,8 +53,8 @@ class Agent(utils.Makeable):
             length: int or None=None, 
             n: int=1, variance: int=1, 
             indexBlacklist: list[int]=[], 
-            elementBlacklist: list[Element]=[], 
-            forceInject: list[Element]=[]) -> list[object]:
+            elementBlacklist: list[dataset.Element]=[], 
+            forceInject: list[dataset.Element]=[]) -> list[object]:
         if length == None:
             length = len(self)
 
@@ -140,8 +140,8 @@ class Phylogeny(utils.Summarizable, utils.Makeable):
             n: int=1, 
             variance: int=1, 
             indexBlacklist: list[int]=[], 
-            elementBlacklist: list[Element]=[], 
-            forceInject: list[Element]=[],
+            elementBlacklist: list[dataset.Element]=[], 
+            forceInject: list[dataset.Element]=[],
             simulation: object or None=None) -> list[object]:
         if not self.dead:
             daughters = self.agent.generateVariants(length, n, variance, indexBlacklist, elementBlacklist)
@@ -251,13 +251,13 @@ class Simulation:
                 scores.append(self.score(phylogeny))
         return scores
 
-    def scoreAchieved(self, score: int) -> bool, Phylogeny or None:
+    def scoreAchieved(self, score: int) -> tuple[bool, Phylogeny] or None:
         for phylogeny in self:
             if phylogeny.score >= score:
                 return True, phylogeny
         return False, None
 
-    def relativeScoreAchieved(self, score: int) -> bool, Phylogeny or None:
+    def relativeScoreAchieved(self, score: int) -> tuple[bool, Phylogeny] or None:
         for phylogeny in self:
             if phylogeny.relativeScore >= score:
                 return True, phylogeny

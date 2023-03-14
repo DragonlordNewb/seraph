@@ -5,4 +5,5 @@
 from seraph.common import *
 from seraph import dataset
 from seraph import simulation
+from seraph import entity
 from seraph import utils

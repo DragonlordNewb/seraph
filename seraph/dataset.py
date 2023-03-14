@@ -134,7 +134,8 @@ class Dataset(utils.Summarizable):
         elements = [element for element in self.elements if element not in blacklist]
         output = [elements.pop(random.randint(0, len(elements) - 1)) for _ in range(n)]
         for element in output:
-            element.increaseAge(ageIncrement)
+            # element.increaseAge(ageIncrement)
+            pass
 
         return output
     
