@@ -252,3 +252,25 @@ class HeuristicDataMap(Classifier):
     def __lshift__(self, entity: Entity) -> any:
         if entity not in self:
             self += entity
+            return True
+        return False
+
+class HeuristicFunctionMap(Classifier):
+    def __init__(self, data: dict[Entity: any], strictness: int=.8, selfImprove: bool=False) -> None:
+        Classifier.__init__(self, *list(data.keys()), strictness=strictness, selfImprove=selfImprove)
+        self.data = data
+
+    def __repr__(self) -> str:
+        return "<seraph.HeuristicDataMap of length " + str(len(self)) + ">"
+    
+    def __rshift__(self, entity: Entity) -> any:
+        if entity in self:
+            mse = self.mostSimilarEntity(entity)
+            return self.data[mse]()
+        return None
+    
+    def __lshift__(self, entity: Entity) -> any:
+        if entity not in self:
+            self += entity
+            return True
+        return False
