@@ -189,6 +189,9 @@ class Classifier(utils.Summarizable, utils.Makeable):
         else:
             self.entities.append(entity)
 
+    def contains(self, entity: Entity) -> bool:
+        return entity in self.entities
+
     def similarity(self, entity: Entity) -> int:
         return sum([ent % entity for ent in self])
 
