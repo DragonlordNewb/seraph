@@ -8,5 +8,5 @@ ABSOLUTE = "ABSOLUTE"
 def plusOrMinus(x: int, n: int) -> int:
     return x + random.randint(-n, n)
 
-class UnsafeValueWarning(warnings.Warning):
+class UnsafeValueWarning(Warning):
     pass
