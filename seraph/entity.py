@@ -145,7 +145,7 @@ class Entity(utils.Summarizable, utils.Makeable, Differentiable):
     def similarity(self, other: object) -> int:
         return sum([a % b for a, b in zip(self, other)])
 
-class Classifier:
+class Classifier(utils.Summarizable, utils.Makeable):
     def __init__(self, *entities: list[Entity], strictness: int=1, selfImprove: bool=False) -> None:
         self.entities = entities
         self.strictness = strictness
