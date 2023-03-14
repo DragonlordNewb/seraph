@@ -19,7 +19,7 @@ class Differentiable:
     def __matmul__(self, other: object) -> int:
         return self.difference(object)
 
-class Property(utils.Summarizable, utils.Makeable, Differentiable):
+class Property(utils.Summarizable, Differentiable):
     isProperty = True
     intEnabled = False
     strEnabled = False
@@ -27,7 +27,7 @@ class Property(utils.Summarizable, utils.Makeable, Differentiable):
     keyingEnabled = False
     lenEnabled = False
 
-    def __init__(self, value: any, leniency: int=1, strictness: int=1) -> None:
+    def __init__(self, value: any, leniency: int=10, strictness: int=.8) -> None:
         self.value = value
         self.leniency = leniency
         self.strictness = strictness
@@ -41,6 +41,7 @@ class Property(utils.Summarizable, utils.Makeable, Differentiable):
     def __len__(self) -> int:
         if not self.lenEnabled:
             raise SyntaxError("Cannot get length - did you check the type of Property you're using?")
+        return len(self.value)
 
     def __str__(self) -> str:
         if not self.strEnabled:
@@ -80,11 +81,23 @@ class Property(utils.Summarizable, utils.Makeable, Differentiable):
     def similarity(self, other: object) -> int:
         raise TypeError("Cannot perform similarity operation using base Propery class.")
 
+    @staticmethod
+    def make(value: any, leniency: int=10, strictness: int=.8) -> object:
+        if type(value) == int:
+            return IntProperty(value, leniency, strictness)
+        elif type(value) == str:
+            return StrProperty(value, leniency, strictness)
+        elif type(value) == list:
+            if issubclass(type(value[0]), Property) or type(value[0]) == Property:
+                return MetalistProperty(value, leniency, strictness)
+            return ListProperty(value, leniency, strictness)
+        raise TypeError("Unsupported value for creation of Property: " + str(type(value).__name__) + ".")
+
 class IntProperty(Property):
     intEnabled = True
 
     def similarity(self, other: Property) -> int:
-        return normal(self.leniency)(int(self), int(other))
+        return delta(self.leniency)(int(self), int(other))
 
 class StrProperty(Property):
     strEnabled = True
@@ -93,7 +106,7 @@ class StrProperty(Property):
     def similarity(self, other: Property) -> int:
         shared = [x for x in str(self) if x in str(other)]
         diff = (len(self) - len(shared)) + abs((len(self) - len(other)))
-        return normal(self.leniency)(0, diff)
+        return delta(self.leniency)(0, diff)
 
 class ListProperty(Property):
     iterationEnabled = True
@@ -101,7 +114,7 @@ class ListProperty(Property):
     keyingEnabled = True
 
     def similarity(self, other: Property):
-        return normal(self.leniency)(len(self), len(other))
+        return delta(self.leniency)(len(self), len(other))
 
 class MetalistProperty(Property):
     iterationEnabled = True
@@ -114,7 +127,7 @@ class MetalistProperty(Property):
 class Entity(utils.Summarizable, utils.Makeable, Differentiable):
     def __init__(self, 
             *properties: list[Property], 
-            strictness: int=1) -> None:
+            strictness: int=.8) -> None:
         self.properties = properties
         self.strictness = strictness
 
@@ -135,8 +148,8 @@ class Entity(utils.Summarizable, utils.Makeable, Differentiable):
         return self[self.n]
 
     def __getitem__(self, *identifiers: int or object) -> Property or list[Property]:
-        if type(identifier[0]) == int:
-            return self.properties[identifier[0]]
+        if type(identifiers[0]) == int:
+            return self.properties[identifiers[0]]
         return [prop for prop in self if type(prop) in identifiers]
 
     def __mod__(self, other: object) -> int:
@@ -146,8 +159,8 @@ class Entity(utils.Summarizable, utils.Makeable, Differentiable):
         return sum([a % b for a, b in zip(self, other)])
 
 class Classifier(utils.Summarizable, utils.Makeable):
-    def __init__(self, *entities: list[Entity], strictness: int=1, selfImprove: bool=False) -> None:
-        self.entities = entities
+    def __init__(self, *entities: list[Entity], strictness: int=.8, selfImprove: bool=False) -> None:
+        self.entities = list(entities)
         self.strictness = strictness
         self.selfImprove = selfImprove
 
@@ -215,4 +228,3 @@ class Classifier(utils.Summarizable, utils.Makeable):
     def highestSimilarity(self, entity: Entity) -> Entity:
         ebs = self.entitiesBySimilarity(entity)
         return max(ebs.keys())
-
