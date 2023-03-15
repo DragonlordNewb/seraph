@@ -221,3 +221,8 @@ class Manufacturable:
 	@classmethod
 	def manufacture(cls, *args):
 		return tuple([cls(x) for x in args])
+	
+class DataContainer:
+	def __init__(self, **kw):
+		for key in kw.keys():
+			setattr(self, key, kw[key])
