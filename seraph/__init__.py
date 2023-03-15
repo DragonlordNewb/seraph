@@ -7,3 +7,4 @@ from seraph import dataset
 from seraph import simulation
 from seraph import entity
 from seraph import utils
+from seraph import seraph

@@ -81,7 +81,7 @@ class Property(utils.Summarizable, utils.Manufacturable, Differentiable):
     def summary(self) -> str:
         return "Property of class type \"" + self.__name__ + "\" and data type \"" + type(self.value).__name__ + "\": " + repr(self.value)
 
-    def similarity(self, other: object) -> int:
+    def similarity(self, other: object) -> int or float:
         raise TypeError("Cannot perform similarity operation using base Propery class.")
 
     @staticmethod
@@ -99,14 +99,14 @@ class Property(utils.Summarizable, utils.Manufacturable, Differentiable):
 class IntProperty(Property):
     intEnabled = True
 
-    def similarity(self, other: Property) -> int:
+    def similarity(self, other: Property) -> int or float:
         return delta(self.leniency)(int(self), int(other))
 
 class StrProperty(Property):
     strEnabled = True
     lenEnabled = True
 
-    def similarity(self, other: Property) -> int:
+    def similarity(self, other: Property) -> int or float:
         shared = [x for x in str(self) if x in str(other)]
         diff = (len(self) - len(shared)) + abs((len(self) - len(other)))
         return delta(self.leniency)(0, diff)
@@ -116,7 +116,7 @@ class ListProperty(Property):
     lenEnabled = True
     keyingEnabled = True
 
-    def similarity(self, other: Property):
+    def similarity(self, other: Property) -> int or float:
         return delta(self.leniency)(len(self), len(other))
 
 class MetalistProperty(Property):
@@ -124,7 +124,7 @@ class MetalistProperty(Property):
     lenEnabled = True
     keyingEnabled = True
 
-    def similarity(self, other: Property) -> int:
+    def similarity(self, other: Property) -> int or float:
         return sum([self[index] % other[index] for index in range(len(self))])
 
 class Entity(utils.Summarizable, utils.Makeable, Differentiable):
@@ -158,7 +158,7 @@ class Entity(utils.Summarizable, utils.Makeable, Differentiable):
     def __eq__(self, other: object) -> bool:
         return self % other >= self.strictness
 
-    def __mod__(self, other: object) -> int:
+    def __mod__(self, other: object) -> int or float:
         return self.similarity(other)
 
     def similarity(self, other: object) -> int:
@@ -214,22 +214,22 @@ class Classifier(utils.Summarizable, utils.Makeable):
     def similarity(self, entity: Entity) -> int:
         return sum([ent % entity for ent in self])
 
-    def entitiesBySimilarity(self, entity: Entity) -> dict[int: Entity]:
+    def entitiesBySimilarity(self, entity: Entity) -> dict[int or float: Entity]:
         output = {}
         for ent in self:
             output[ent % entity] = ent
         return output
 
-    def similaritiesByEntity(self, entity: Entity) -> dict[Entity: int]:
+    def similaritiesByEntity(self, entity: Entity) -> dict[Entity: int or float]:
         output = {}
         for ent in self:
             output[ent] = ent % entity
         return output
 
-    def mostSimilarEntity(self, entity: Entity) -> Entity:
+    def mostSimilarEntity(self, entity: Entity) -> tuple[int or float, Entity]:
         ebs = self.entitiesBySimilarity(entity)
         maximum = max(ebs.keys())
-        return ebs[maximum]
+        return maximum, ebs[maximum]
 
     def highestSimilarity(self, entity: Entity) -> Entity:
         ebs = self.entitiesBySimilarity(entity)
@@ -245,7 +245,7 @@ class HeuristicDataMap(Classifier):
     
     def __rshift__(self, entity: Entity) -> any:
         if entity in self:
-            mse = self.mostSimilarEntity(entity)
+            sim, mse = self.mostSimilarEntity(entity)
             return self.data[mse]
         return None
     
@@ -265,7 +265,7 @@ class HeuristicFunctionMap(Classifier):
     
     def __rshift__(self, entity: Entity) -> any:
         if entity in self:
-            mse = self.mostSimilarEntity(entity)
+            sim, mse = self.mostSimilarEntity(entity)
             return self.data[mse]()
         return None
     
@@ -274,3 +274,69 @@ class HeuristicFunctionMap(Classifier):
             self += entity
             return True
         return False
+    
+class Aggregator:
+    def __init__(self, *initials: list[list[Entity] or tuple[Entity] or Classifier], strictness: int=0.5, selfImprove: bool=False) -> None:
+        self.classifiers = []
+        for initial in initials:
+            if type(initial) in [list, tuple]:
+                self.classifiers.append(Classifier(*list(initial), strictness=strictness, selfImprove=selfImprove))
+            elif type(initial) == Classifier:
+                initial.strictness = strictness
+                initial.selfImprove = selfImprove
+                self.classifiers.append(initial)
+
+        self.strictness = strictness
+        self.selfImprove = selfImprove
+
+    def __repr__(self) -> str:
+        return "<seraph.Aggregator of length " + str(len(self)) + ">"
+    
+    def __len__(self) -> str:
+        return len(self.classifiers)
+    
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+    
+    def __next__(self) -> Classifier:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self.classifiers[n]
+    
+    def __iadd__(self, classifier: Classifier) -> None:
+        self.classifiers.append(classifier)
+    
+    def __rshift__(self, entity: Entity) -> tuple[int or float, Entity]:
+        """
+        Map from the Aggregator to the Entity - in other words,
+        find which entity in the whole Aggregator is most similar
+        to the input.
+        """
+        outputs = {}
+        for classifier in self:
+            maximum, ent = classifier.mostSimilarEntity(entity)
+            outputs[maximum] = ent
+        maxkey = maximum(outputs.keys())
+        return maxkey, outputs[maxkey]
+    
+    def __lshift__(self, entity: Entity) -> tuple[int or float, Classifier]:
+        """
+        Map from the Entity to the Aggregator - in other words,
+        try to match the Entity with its respective Classifier 
+        that is inside the Aggregator, or make a new one need be.
+        """
+        for classifier in self:
+            if entity in classifier:
+                classifier += entity
+                return classifier % entity, classifier
+        newClassifier = Classifier(entity, self.strictness, self.selfImprove)
+        self += newClassifier
+        return newClassifier
+    
+    def __invert__(self) -> list[Classifier]:
+        return list(self)
+    
+    def dump(self) -> list[Classifier]:
+        return ~self
