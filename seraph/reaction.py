@@ -35,11 +35,11 @@ class ActionReactionPair:
         return self
     
     def __next__(self) -> Action or Reaction or SEQBREAK:
-		self.n += 1
+	self.n += 1
         if self.itermode == ACTION:
             if self.n >= len(self.actions):
-                self.itermode = REACTION
-				self.n = -1
+		self.itermode = REACTION
+		self.n = -1
                 return SEQBREAK
             return self.actions[n]
 		else:
