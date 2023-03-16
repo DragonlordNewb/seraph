@@ -119,7 +119,7 @@ class HammingStrProperty(StrProperty):
 
 class LevenshteinStrProperty(StrProperty):
     def similarity(self, other: Property) -> int or float:
-        
+        return levenshtein(str(self), str(other))
 
 class ListProperty(Property):
     iterationEnabled = True
