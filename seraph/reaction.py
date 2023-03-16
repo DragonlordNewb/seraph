@@ -18,6 +18,16 @@ class Reaction(Action):
 
 class ActionReactionPair:
 	def __init__(self, actions: Action or list[Action], reaction: Reaction or list[Reaction]) -> None:
+		if type(actions) == Action:
+			actions = [action]
+		if type(reactions) == Reaction:
+			reactions = [reactions]
+			
+		for action in actions:
+			action.setParent(self)
+		for reaction in reactions:
+			reaction.setParent(self)
+
 		self.actions = actions
 		self._actionClassifier = entity.Classifier(*self.actions)
 		self.reaction = reaction
@@ -46,3 +56,6 @@ class ActionReactionPair:
 			if self.n >= len(self.reactions):
 				raise StopIteration
 			return self.reactions[self.n]
+		
+	def __mod__(self, other: object) -> int:
+		pass
