@@ -1,5 +1,4 @@
 from seraph import utils
-import warnings
 
 class State:
     value = 0
@@ -68,13 +67,20 @@ class DynamicState(State):
 class StateMachine:
     def __init__(self, initialState: State, operate: utils.function or None=None) -> None:
         self.state = initialState
+        self.initialState = initialState
+
+        self.hasRun = False
 
         if hasattr(self, "operate") and operate == None:
             return None
         elif (not hasattr(self, "operate")) and operate != None:
-            self.getSubstates = operate
+            self.operate = operate
         else:
             raise SyntaxError("Must either subclass a operate method onto the StateMachine or supply a function at init.")
+        
+        # unit test on the operation function
+        if not issubclass(type(self.operate(self.state))):
+            raise TypeError("Operate function (however it was inputted) does not return a State object.")
 
     def __repr__(self) -> str:
         return "<seraph.StateMachine>"
@@ -83,4 +89,17 @@ class StateMachine:
         return self
     
     def __next__(self) -> State:
-        
+        if self.hasRun:
+            self.jump()
+            return self.state
+        self.hasRun = True
+        return self.state
+    
+    def __invert__(self) -> State:
+        return self.nextState()
+    
+    def nextState(self) -> State:
+        return self.operate(self.state)
+    
+    def jump(self) -> None:
+        self.state = self.nextState()

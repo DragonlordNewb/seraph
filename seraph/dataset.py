@@ -3,6 +3,7 @@
 # OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
 
 import random
+import math
 
 from seraph import utils
 from seraph.common import *

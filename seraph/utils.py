@@ -226,3 +226,5 @@ class DataContainer:
 	def __init__(self, **kw):
 		for key in kw.keys():
 			setattr(self, key, kw[key])
+
+		self.__getitem__ = self.__getattribute__
