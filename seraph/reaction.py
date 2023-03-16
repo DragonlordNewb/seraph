@@ -19,7 +19,15 @@ class Reaction(Action):
 class ActionReactionPair:
     def __init__(self, actions: Action or list[Action], reaction: Reaction or list[Reaction]) -> None:
         self.actions = actions
+		self._actionClassifier = entity.Classifier(*self.actions)
         self.reaction = reaction
+		self._reactionClassifier = entity.Classifier(*self.reactions)
+		
+	def __repr__(self) -> str:
+		return "<ActionReactionPair " + str(self.actions) + " -> " + str(self.reactions) + ">"
+
+	def __len__(self) -> tuple[int, int]:
+		return (len(self.actions), len(self.reactions))
         
     def __iter__(self) -> object:
         self.n = -1
@@ -27,7 +35,14 @@ class ActionReactionPair:
         return self
     
     def __next__(self) -> Action or Reaction or SEQBREAK:
-        self.n += 1
+		self.n += 1
         if self.itermode == ACTION:
             if self.n >= len(self.actions):
-                
+                self.itermode = REACTION
+				self.n = -1
+                return SEQBREAK
+            return self.actions[n]
+		else:
+			if self.n >= len(self.reactions):
+				raise StopIteration
+			return self.reactions[n]
