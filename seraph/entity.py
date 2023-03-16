@@ -111,6 +111,16 @@ class StrProperty(Property):
         diff = (len(self) - len(shared)) + abs((len(self) - len(other)))
         return delta(self.leniency)(0, diff)
 
+class HammingStrProperty(StrProperty):
+    def similarity(self, other: Property) -> int or float:
+        if len(self) != len(other):
+            return 0
+        return sum([1 for i1, i2 in zip(str(self), str(other)) if i1 == i2]) / len(self)
+
+class LevenshteinStrProperty(StrProperty):
+    def similarity(self, other: Property) -> int or float:
+        
+
 class ListProperty(Property):
     iterationEnabled = True
     lenEnabled = True
