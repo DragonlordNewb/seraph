@@ -6,7 +6,8 @@ class Action(entity.Entity):
 	def __init__(self, 
 				*properties: list[entity.Property or entity.Entity], 
 				strictness: int=0.8,
-				parent: object or None=None) -> None:
+				parent: object or None=None,
+		    inverted: bool=False) -> None:
 		entity.Entity.__init__(self, *properties, strictness=strictness)
 		self.parent = parent
 
