@@ -7,7 +7,7 @@ class Action(entity.Entity):
 				*properties: list[entity.Property or entity.Entity], 
 				strictness: int=0.8,
 				parent: object or None=None,
-		    inverted: bool=False) -> None:
+				inverted: bool=False) -> None:
 		entity.Entity.__init__(self, *properties, strictness=strictness)
 		self.parent = parent
 		self.inverted = inverted
