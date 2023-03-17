@@ -352,7 +352,7 @@ class Aggregator:
         return ~self
     
 class HeuristicContainer:
-    def __init__(self, *entities: list[Entity], strictness: int=0.8):
+    def __init__(self, *entities: list[Entity], strictness: int=0.8) -> None:
         self.entities = entities
         self.strictness = strictness
 
