@@ -8,4 +8,4 @@ class Directive(utils.DataContainer, utils.Makeable):
 		self.completed = False
 		
 	def duplicate(self) -> object:
-		return 
+		return self.make(*self._args, **self._kwargs)
