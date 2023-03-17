@@ -1,6 +1,6 @@
 from seraph import utils
 
-class Directive(utils.DataContainer, utils.Makeable):
+class Directive(utils.Makeable):
 	requires = {} # dict of {name: default}
 	
 	def __init__(self, *args, **kwargs):
@@ -8,7 +8,7 @@ class Directive(utils.DataContainer, utils.Makeable):
 			if not key in kwargs.keys():
 				kwargs[key] = self.requires[key]
 				
-		utils.DataContainer.__init__(self, *args, **kwargs)
+		self.data = utils.DataContainer(*args, **kwargs)
 		self._args = args
 		self._kwargs = kwargs
 		self.completed = False
