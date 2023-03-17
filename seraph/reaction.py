@@ -17,7 +17,7 @@ class Reaction(Action):
 	sequence = REACTION
 
 class ActionReactionPair:
-	def __init__(self, actions: Action or list[Action], reaction: Reaction or list[Reaction]) -> None:
+	def __init__(self, actions: Action or list[Action], reactions: Reaction or list[Reaction]) -> None:
 		if type(actions) == Action:
 			actions = [action]
 		if type(reactions) == Reaction:
@@ -30,7 +30,7 @@ class ActionReactionPair:
 
 		self.actions = actions
 		self._actionClassifier = entity.Classifier(*self.actions)
-		self.reaction = reaction
+		self.reactions = reactions
 		self._reactionClassifier = entity.Classifier(*self.reactions)
 		
 	def __repr__(self) -> str:
@@ -58,4 +58,10 @@ class ActionReactionPair:
 			return self.reactions[self.n]
 		
 	def __mod__(self, other: object) -> int:
-		pass
+		return min(self.causedBy(*other.actions), self.causes(*other.reactions))
+	
+	def causedBy(self, *actions: list[Action]) -> int:
+		return sum([a1 % a2 for a1, a2 in zip(self.actions, actions)])
+	
+	def causes(self, *reactions: list[Reaction]) -> int:
+		return sum([r1 % r2 for r1, r2 in zip(self.reactions, reactions)])

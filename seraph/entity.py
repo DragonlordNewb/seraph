@@ -350,3 +350,33 @@ class Aggregator:
     
     def dump(self) -> list[Classifier]:
         return ~self
+    
+class HeuristicContainer:
+    def __init__(self, *entities: list[Entity], strictness: int=0.8):
+        self.entities = entities
+        self.strictness = strictness
+
+    def __repr__(self) -> str:
+        return "<seraph.HeuristicContainer of length " + str(len(self)) + ">"
+    
+    def __len__(self) -> int:
+        return len(self.entities)
+    
+    def __getitem__(self, index: int) -> Entity:
+        return self.entities[index]
+    
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+    
+    def __next__(self) -> Entity:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self[self.n]
+    
+    def __contains__(self, entity: Entity) -> bool:
+        return self % entity <= self.strictness
+    
+    def __mod__(self, entity: Entity) -> int or float:
+        return sum([ent % entity for ent in self])

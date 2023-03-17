@@ -5,4 +5,5 @@ from seraph import foresight
 from seraph.common import *
 
 class Seraph:
-    def __init__(self, initialData: list[])
+    def __init__(self, initialData: list[int]):
+        pass
