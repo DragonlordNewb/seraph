@@ -10,6 +10,12 @@ class Action(entity.Entity):
 		    inverted: bool=False) -> None:
 		entity.Entity.__init__(self, *properties, strictness=strictness)
 		self.parent = parent
+		self.inverted = inverted
+		self._properties = properties
+		self._strictness = strictness
+		
+	def __invert__(self) -> object:
+		return type(self)(*self._properties, self._strictness, self.parent, not self.inverted)
 
 	def setParent(self, parent: object) -> None:
 		self.parent = parent
