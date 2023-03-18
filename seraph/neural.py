@@ -26,30 +26,109 @@
 # And no, I didn't generate this code using ChatGPT. I wrote all this with my own keyboard.
 # ChatGPT gave me the outline and I filled it in.
 
-import numpy as np # i hate you, numpy, but i'm too lazy to generate my own standard deviations
+import numpy as np
+from tqdm import tqdm
 
-from seraph import utils
-
-def sigmoid(x):
+def sigmoid(x, derivative=False):
+	if derivative:
+		return sigmoid(x) * (1 - sigmoid(x))
 	return 1 / (1 + np.exp(-x))
 
 class Neuron:
-	def __init__(self, inputSize: int, activationFunction: utils.function=sigmoid) -> None:
-		self.weights = np.random.randn(inputSize) # because it does the cool standard deviation stuff
-		self.bias = 0
+	def __init__(self, weights, bias):
+		self.weights = weights
+		self.bias = bias
+		self.weighted_sum = 0
+	
+	def forward(self, inputs):
+		self.weighted_sum = np.dot(self.weights, inputs) + self.bias
+		activation = sigmoid(self.weighted_sum)
+		return activation
+	
+	def backward(self, error_gradient, inputs, learning_rate):
+		activation_gradient = sigmoid(self.weighted_sum, derivative=True)
+		self.error_gradient = error_gradient * activation_gradient
+		weight_gradients = inputs * self.error_gradient[:, np.newaxis]
+		bias_gradient = self.error_gradient.sum()
+		self.weights -= learning_rate * weight_gradients
+		self.bias -= learning_rate * bias_gradient
+		return self.error_gradient
 
-		if (not hasattr(self, "activate")) and (activationFunction != None):
-			self.activate = activationFunction
-		elif hasattr(self, "activate") and (activationFunction != None):
-			raise SyntaxError("Cannot both subclass an \"activate\" method and supply one at init.")
-		elif (not hasattr(self, "activate")) and (activationFunction == None):
-			raise SyntaxError("Must either subclass an \"activate\" method or supply one at init.")
+	def sigmoid(self, x: int or float):
+		return 1 / (1 + np.exp(-x))
 
-	def __len__(self) -> int:
-		return len(self.weights)
-		  
-	def randomizeWeights(self, inputSize: int=None) -> list[int or float]:
-		self.weights = np.random.randn(len(self))
+	def sigmoid_derivative(self, x: int or float):
+		fx = self.sigmoid(x)
+		return fx * (1 - fx)
 
-	def feedforward(self, *inputs: list[int]):
-		return self.activate(np.dot(np.array(inputs), self.weights) + self.bias)
+class Layer:
+	def __init__(self, n_inputs, n_neurons):
+		self.neurons = [Neuron(n_inputs, 0) for _ in range(n_neurons)]
+		self.weights = np.random.randn(n_neurons, n_inputs).astype(np.float64)
+		self.bias = np.array([neuron.bias for neuron in self.neurons]).reshape((-1, 1))
+
+	def forward(self, inputs):
+		return np.array([neuron.forward(inputs) for neuron in self.neurons])
+
+	def backward(self, error_gradients, inputs, learning_rate):
+		# Compute gradients for each neuron in the layer
+		neuron_gradients = np.array([neuron.backward(error_gradients[i], inputs, learning_rate) for i, neuron in enumerate(self.neurons)])
+		# Compute gradients for weights and biases
+		weight_gradients = np.dot(neuron_gradients, inputs.T)
+		bias_gradients = neuron_gradients.sum(axis=1, keepdims=True)
+		# Update weights and biases
+		self.weights -= learning_rate * weight_gradients
+		self.bias -= learning_rate * bias_gradients
+		# Update weights and biases for each neuron in the layer
+		for i, neuron in enumerate(self.neurons):
+			neuron.weights = self.weights[:, i]
+			neuron.bias = self.bias[i, 0]
+		# Return error gradients for the previous layer
+		return np.dot(self.weights.T, neuron_gradients)
+
+class NeuralNetwork:
+	def __init__(self, layers, learning_rate=0.1):
+		self.layers = layers
+		self.learning_rate = learning_rate
+
+	def forward(self, inputs):
+		if type(inputs) == list:
+			inputs = np.array(inputs)
+
+		for layer in self.layers:
+			inputs = layer.forward(inputs)
+		return inputs
+
+	def backward(self, inputs, targets, learning_rate):
+		# Forward pass
+		predictions = self.forward(inputs)
+
+		# Backward pass
+		error = predictions - targets
+		for layer in reversed(self.layers):
+			error = layer.backward(error, inputs, learning_rate)
+	
+	def train(self, x, y, epochs, learning_rate):
+		if type(x) == list:
+			x = np.array(x)
+
+		if type(y) == list:
+			y = np.array(y)
+
+		for epoch in tqdm(range(epochs), desc="Training neural network"):
+			error = 0
+			for i in range(len(x)):
+				inputs = x[i]
+				targets = y[i]
+
+				# Forward pass
+				output = self.forward(inputs)
+
+				# Backward pass
+				self.backward(inputs, targets, learning_rate)
+
+				# Compute error
+				error += np.mean(np.abs(targets - output))
+
+			# Print error at end of epoch
+			print(f"Epoch {epoch+1}/{epochs} error: {error/len(x)}")
