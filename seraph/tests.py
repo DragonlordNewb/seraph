@@ -30,17 +30,17 @@ def	test_01():
 	print(y)
 
 def test_02():
-	from seraph import neural
+	from seraph import neural1
 
-	x = [i for i in range(50)]
-	y = [2 * X + 1 for X in x]
+	x = [[i] for i in range(50)]
+	y = []
+	for X in x:
+		val = (2 * X[0]) + 1
+		y.append([val])
 
-	nn = neural.NeuralNetwork(
-		neural.Layer(neural.Neuron(1), neural.Neuron(1), neural.Neuron(1)),
-		neural.Layer(neural.Neuron(3), neural.Neuron(3), neural.Neuron(3), neural.Neuron(3), neural.Neuron(3)),
-		neural.Layer(neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5)),
-		neural.Layer(neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5)),
-		neural.Layer(neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5)),
-		neural.Layer(neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5), neural.Neuron(5)),
-		neural.Layer(neural.Neuron(5), neural.Neuron(5), neural.Neuron(5)),
-	)
+	schem = neural1.NeuralNetworkSchematic(1, [3, 5, 5, 5, 5, 5, 2])
+	nn = schem.assemble()
+	nn.train(x, y)
+	print(nn.predict([5]))
+	print(nn.predict([6]))
+	print(nn.predict([7]))

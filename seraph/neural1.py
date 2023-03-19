@@ -1,9 +1,23 @@
 import random
+import tqdm
 import math
 
 LEARNING_RATE = 0.01
 
-sigmoid, derivative = lambda x: 1 / (1 + math.exp(-x)), lambda x: (1 / (1 + math.exp(-x))) * (1 - (1 / (1 + math.exp(-x))))
+debug = True
+
+def sigmoid(x):
+	try:
+		return 1 / (1 + math.exp(-x))
+	except OverflowError:
+		return 1
+	
+def derivative(x):
+	try:
+		return sigmoid(x) * (1 - sigmoid(x))
+	except OverflowError:
+		return 0
+
 def sgn(x):
 	if x > 0:
 		return 1
@@ -43,20 +57,21 @@ class Neuron:
 				
 	def feedforward(self, inputs: list[int or float]) -> int or float:
 		self.inputs = inputs
-		assert len(inputs) == len(self), "Must take the correct number of inputs (in this case " + str(len(self)) + ")"
+		assert len(inputs) == len(self) or debug, "Must take the correct number of inputs (in this case " + str(len(self)) + ")"
 
 		weightedSum =  sum([i * w for i, w in zip(inputs, self.weights)])
 		return sigmoid(weightedSum + self.bias)
 	
-	def calculateError(self, inputs: list[int or float], expected: int or float) -> int or float:
-		delta = self.feedforward(inputs) - expected
-		return sgn(delta) * math.sqrt(abs(delta))
+	def calculateError(self, inputs: list[int or float], expected: int or float) -> float:
+		prediction = self.feedforward(inputs)
+		expected = [expected] * len(prediction)
+    	error = [(p - e) ** 2 for p, e in zip(prediction, expected)]
+    	return sum(error) / len(error)
 	
 	def backpropagate(self, errors: list[int or float]) -> None:
-		for index in range(len(self)):
-			self.weights[index] += LEARNING_RATE * errors[index] * self.inputs[index]
-		
-		self.bias += LEARNING_RATE * sum(errors)
+		for i in range(len(self.weights)):
+			self.weights[i] -= LEARNING_RATE * errors * self.inputs[i] * derivative(sum([self.weights[j] * self.inputs[j] for j in range(len(self))]) + self.bias)
+		self.bias -= LEARNING_RATE * errors * derivative(sum([self.weights[j] * self.inputs[j] for j in range(len(self))]) + self.bias)
 
 class Layer:
 	def __init__(self, *neurons: list[Neuron]) -> None:
@@ -113,7 +128,7 @@ class NeuralNetwork:
 		return inputs
 
 	def feedbackward(self, expected: list[int or float]) -> None:
-		for layer in [layer for layer in reversed(self)]:
+		for layer in [layer for layer in reversed(self.layers)]:
 			layer.backpropagate(self.inputs, expected)
 
 	def adapt(self, inputs: list[list[int or float]], expected: list[list[int or float]]):
@@ -122,7 +137,7 @@ class NeuralNetwork:
 			self.feedbackward(y)
 
 	def train(self, inputs: list[list[int or float]], expected: list[list[int or float]], epochs: int=1000):
-		for epoch in range(epochs):
+		for epoch in tqdm.tqdm(range(epochs), desc="Training neural network"):
 			self.adapt(inputs, expected)
 
 	def predict(self, inputs: list[int or float]) -> list[int or float]:
