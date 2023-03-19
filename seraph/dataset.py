@@ -219,5 +219,3 @@ class Dataset(utils.Summarizable):
         elements2 = parent2.elementsByRelativeScore()[:length]
 
         return cls(elements1 + elements2, parent1)
-
-    

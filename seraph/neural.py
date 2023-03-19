@@ -1,134 +1,155 @@
-# To build a neural network (thank you, ChatGPT):
+import random
+import math
 
-# Initialize the network:
-#
-# 	Define the number of input, hidden, and output layers
-# 	Randomly initialize the weights and biases for each layer
-# 	Define the activation function
-# 		For example, you can use the sigmoid function, which takes a weighted sum of inputs and outputs a value between 0 and 1
-# 	Define the derivative of the activation function for backpropagation
+LEARNING_RATE = 0.01
 
-# Train the network:
-#
-# Repeat until convergence:
-# 	For each training example:
-# 		Forward pass: compute the output of the network given the input and current weights
-# 		Compute the error between the predicted output and the actual output
-# 		Backward pass: compute the gradient of the error with respect to the weights using backpropagation
-# 		Update the weights using the learning rate and the gradient
+sigmoid, derivative = lambda x: 1 / (1 + math.exp(-x)), lambda x: (1 / (1 + math.exp(-x))) * (1 - (1 / (1 + math.exp(-x))))
+def sgn(x):
+	if x > 0:
+		return 1
+	if x < 0:
+		return -1
+	return 0
 
-# Test the network:
-#
-# For each test example:
-# 	Forward pass: compute the output of the network given the input and trained weights
-# 	Compare the predicted output to the actual output
+def generateNormalDistribution(mu, sigma, size):
+	points = []
+	for i in range(size // 2):
+		u1 = random.random()
+		u2 = random.random()
+		z1 = math.sqrt(-2.0 * math.log(u1)) * math.cos(2 * math.pi * u2)
+		z2 = math.sqrt(-2.0 * math.log(u1)) * math.sin(2 * math.pi * u2)
+		x1 = mu + sigma * z1
+		x2 = mu + sigma * z2
+		points.append(x1)
+		points.append(x2)
+	if size % 2 != 0:
+		u1 = random.random()
+		u2 = random.random()
+		z1 = math.sqrt(-2.0 * math.log(u1)) * math.cos(2 * math.pi * u2)
+		x = mu + sigma * z1
+		points.append(x)
+	return points
 
-# And no, I didn't generate this code using ChatGPT. I wrote all this with my own keyboard.
-# ChatGPT gave me the outline and I filled it in.
-
-import numpy as np
-from tqdm import tqdm
-
-def sigmoid(x, derivative=False):
-	if derivative:
-		return sigmoid(x) * (1 - sigmoid(x))
-	return 1 / (1 + np.exp(-x))
+# Lux's Neural Network Designs! 
 
 class Neuron:
-	def __init__(self, weights, bias):
-		self.weights = weights
-		self.bias = bias
-		self.weighted_sum = 0
-	
-	def forward(self, inputs):
-		self.weighted_sum = np.dot(self.weights, inputs) + self.bias
-		activation = sigmoid(self.weighted_sum)
-		return activation
-	
-	def backward(self, error_gradient, inputs, learning_rate):
-		activation_gradient = sigmoid(self.weighted_sum, derivative=True)
-		self.error_gradient = error_gradient * activation_gradient
-		weight_gradients = inputs * self.error_gradient[:, np.newaxis]
-		bias_gradient = self.error_gradient.sum()
-		self.weights -= learning_rate * weight_gradients
-		self.bias -= learning_rate * bias_gradient
-		return self.error_gradient
+	def __init__(self, inputCount: int) -> None:
+		self.weights = generateNormalDistribution(1, 1, inputCount)
+		self.bias = 0
+		self.inputs = []
 
-	def sigmoid(self, x: int or float):
-		return 1 / (1 + np.exp(-x))
+	def __len__(self) -> int:
+		return len(self.weights)
+				
+	def feedforward(self, inputs: list[int or float]) -> int or float:
+		self.inputs = inputs
+		assert len(inputs) == len(self), "Must take the correct number of inputs (in this case " + str(len(self)) + ")"
 
-	def sigmoid_derivative(self, x: int or float):
-		fx = self.sigmoid(x)
-		return fx * (1 - fx)
+		weightedSum =  sum([i * w for i, w in zip(inputs, self.weights)])
+		return sigmoid(weightedSum + self.bias)
+	
+	def calculateError(self, inputs: list[int or float], expected: int or float) -> int or float:
+		delta = self.feedforward(inputs) - expected
+		return sgn(delta) * math.sqrt(abs(delta))
+	
+	def backpropagate(self, errors: list[int or float]) -> None:
+		for index in range(len(self)):
+			self.weights[index] += LEARNING_RATE * errors[index] * self.inputs[index]
+		
+		self.bias += LEARNING_RATE * sum(errors)
 
 class Layer:
-	def __init__(self, n_inputs, n_neurons):
-		self.neurons = [Neuron(n_inputs, 0) for _ in range(n_neurons)]
-		self.weights = np.random.randn(n_neurons, n_inputs).astype(np.float64)
-		self.bias = np.array([neuron.bias for neuron in self.neurons]).reshape((-1, 1))
+	def __init__(self, *neurons: list[Neuron]) -> None:
+		self.neurons = neurons
 
-	def forward(self, inputs):
-		return np.array([neuron.forward(inputs) for neuron in self.neurons])
+	def __len__(self) -> int:
+		return len(self.neurons)
+	
+	def __iter__(self) -> object:
+		self.n = -1
+		return self
+	
+	def __next__(self) -> Neuron:
+		self.n += 1 
+		if self.n >= len(self):
+			raise StopIteration
+		return self.neurons[self.n]
 
-	def backward(self, error_gradients, inputs, learning_rate):
-		# Compute gradients for each neuron in the layer
-		neuron_gradients = np.array([neuron.backward(error_gradients[i], inputs, learning_rate) for i, neuron in enumerate(self.neurons)])
-		# Compute gradients for weights and biases
-		weight_gradients = np.dot(neuron_gradients, inputs.T)
-		bias_gradients = neuron_gradients.sum(axis=1, keepdims=True)
-		# Update weights and biases
-		self.weights -= learning_rate * weight_gradients
-		self.bias -= learning_rate * bias_gradients
-		# Update weights and biases for each neuron in the layer
-		for i, neuron in enumerate(self.neurons):
-			neuron.weights = self.weights[:, i]
-			neuron.bias = self.bias[i, 0]
-		# Return error gradients for the previous layer
-		return np.dot(self.weights.T, neuron_gradients)
+	def feedforward(self, inputs: list[int or float]) -> list[int or float]:
+		return [neuron.feedforward(inputs) for neuron in self]
+
+	def calculateErrors(self, inputs: list[int or float], expected: list[int or float]) -> list[int or float]:
+		return [neuron.calculateError(inputs, expected) for neuron in self]
+	
+	def backpropagate(self, inputs: list[int or float], expected: list[int or float]) -> None:
+		errors = self.calculateErrors(inputs, expected)
+		for neuron in self:
+			neuron.backpropagate(errors)
 
 class NeuralNetwork:
-	def __init__(self, layers, learning_rate=0.1):
+	def __init__(self, *layers: list[Layer]) -> None:
 		self.layers = layers
-		self.learning_rate = learning_rate
+		self.inputs = None
+		self.output = None
 
-	def forward(self, inputs):
-		if type(inputs) == list:
-			inputs = np.array(inputs)
-
-		for layer in self.layers:
-			inputs = layer.forward(inputs)
+	def __len__(self) -> int:
+		return len(self.layers)
+	
+	def __iter__(self) -> object:
+		self.n = -1
+		return self
+	
+	def __next__(self) -> Neuron:
+		self.n += 1 
+		if self.n >= len(self):
+			raise StopIteration
+		return self.layers[self.n]
+	
+	def feedforward(self, inputs: list[int or float]) -> list[int or float]:
+		self.inputs = inputs
+		for layer in self:
+			inputs = layer.feedforward(inputs)
+		self.output = inputs
 		return inputs
 
-	def backward(self, inputs, targets, learning_rate):
-		# Forward pass
-		predictions = self.forward(inputs)
+	def feedbackward(self, expected: list[int or float]) -> None:
+		for layer in [layer for layer in reversed(self)]:
+			layer.backpropagate(self.inputs, expected)
 
-		# Backward pass
-		error = predictions - targets
-		for layer in reversed(self.layers):
-			error = layer.backward(error, inputs, learning_rate)
+	def adapt(self, inputs: list[list[int or float]], expected: list[list[int or float]]):
+		for x, y in zip(inputs, expected):
+			self.feedforward(x)
+			self.feedbackward(y)
+
+	def train(self, inputs: list[list[int or float]], expected: list[list[int or float]], epochs: int=1000):
+		for epoch in range(epochs):
+			self.adapt(inputs, expected)
+
+	def predict(self, inputs: list[int or float]) -> list[int or float]:
+		return self.feedforward(inputs)
 	
-	def train(self, x, y, epochs, learning_rate):
-		if type(x) == list:
-			x = np.array(x)
+	def duplicate(self) -> object:
+		return NeuralNetwork(self.layers)
+	
+class NeuralNetworkSchematic:
+	def __init__(self, inputCount: int, sizes: list[int]) -> None:
+		self.sizes = sizes
+		self.inputCount = inputCount
 
-		if type(y) == list:
-			y = np.array(y)
+	def assemble(self) -> NeuralNetwork:
+		layers = [Layer(*[Neuron(self.inputCount) for _ in range(self.sizes[0])])]
 
-		for epoch in tqdm(range(epochs), desc="Training neural network"):
-			error = 0
-			for i in range(len(x)):
-				inputs = x[i]
-				targets = y[i]
+		for index, size in enumerate(self.sizes[1:]):
+			layers.append(Layer(*[Neuron(self.sizes[index - 1]) for _ in range(size)]))
 
-				# Forward pass
-				output = self.forward(inputs)
-
-				# Backward pass
-				self.backward(inputs, targets, learning_rate)
-
-				# Compute error
-				error += np.mean(np.abs(targets - output))
-
-			# Print error at end of epoch
-			print(f"Epoch {epoch+1}/{epochs} error: {error/len(x)}")
+		return NeuralNetwork(*layers)
+	
+	def extend(self, size: int or None=None) -> None:
+		if size:
+			self.sizes.append(size)
+		else:
+			self.sizes.append(self.sizes[-1])
+	
+class BiconicNeuralNetworkSchematic(NeuralNetworkSchematic):
+	def __init__(self, inputCount: int, initialHeight: int, hiddenHeight: int, width: int) -> None:
+		NeuralNetworkSchematic.__init__(self, inputCount, [initialHeight] + [hiddenHeight for _ in range(width)] + [initialHeight])
