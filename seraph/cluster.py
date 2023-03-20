@@ -38,4 +38,11 @@ class Cluster:
 		currentIndex = 0
 		while len(database) > 0:
 			ent = database.pop(currentIndex)
-			for other in self:
+			currentList.append(ent)
+			ebs = {ent % other: index for index, other in enumerate(database)}
+			if min(ebs.keys()) >= threshold:
+				output.append(Cluster(*currentList))
+				currentList = []
+			currentIndex = ebs[min(ebs.keys())]
+
+		return output
