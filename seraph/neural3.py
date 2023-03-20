@@ -24,7 +24,7 @@ class ActivationFunction:
 			return self.activation(x)
 		elif mode == DERIVATIVE:
 			return self.derivative(x)
-		raise SyntaxError("\"mode\" argument of calling an ActivationFunction must be ACTIVATION or DERIVATIVE."
+		raise SyntaxError("\"mode\" argument of calling an ActivationFunction must be ACTIVATION or DERIVATIVE.")
 		
 class Neuron:
 	def __init__(self, activation: ActivationFunction) -> None:
