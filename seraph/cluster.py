@@ -46,3 +46,10 @@ class Cluster:
 			currentIndex = ebs[min(ebs.keys())]
 
 		return output
+
+	def crack(self, n: int, recursion: int=0):
+		initial = self[0]
+		thresholds = [self[0] % entity for entity in [ent for ent in self][1:]]
+		thresholds.sort()
+		threshold = thresholds[n]
+		return self.pack(threshold, recursion)

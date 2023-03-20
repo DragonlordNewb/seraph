@@ -11,4 +11,8 @@ class PointProperty(entity.Property):
 
 class PointEntity(entity.Entity):
     def __init__(self, *coordinates: list[int], strictness: int=0.8) -> None:
-        
+        entity.Entity.__init__(self, PointProperty(coordinates, strictness=strictness), strictness=strictness)
+
+class ExpandedPointEntity(entity.Entity):
+    def __init__(self, *coordinates: list[int], strictness: int=0.8) -> None:
+        entity.Entity.__init__(self, [entity.IntProperty(coordinate, strictness=strictness) for coordinate in coordinates])

@@ -10,4 +10,4 @@ from seraph import entity
 from seraph import seraph
 from seraph import reaction
 from seraph import tests
-from seraph import neural2
+from seraph import neural1
