@@ -11,18 +11,6 @@ GRADIENT = "gradient"
 INPUT = 0
 OUTPUT = -1
 
-class Sigmoid(ActivationFunction):
-	def activation(self, x):
-		return 1 / (1 + math.exp(-x))
-
-	def derivative(self, x):
-		return self.activation(x) * (1 - self.activation(x))
-
-class MeanSquareError(LossFunction):
-	def loss(self, reality, prediction):
-		assert len(reality) == len(prediction), "Can't compare reality and prediction arguments of different length."
-		return sum([(p - r) ** 2 for r, p in zip(reality, prediction)]) / len(reality)
-
 class Neuron:
 	parentLayer = None
 
