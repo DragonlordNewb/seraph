@@ -1,17 +1,14 @@
 import numpy as np
 from typing import Union
 import math
+import tqdm
 
-from seraph.common import ActivationFunction, LossFunction, Sigmoid
+from seraph.common import ActivationFunction, LossFunction, Sigmoid, MeanSquareError
 
 ACTIVATION = "activation"
 DERIVATIVE = "derivative"
 LOSS = "loss"
 GRADIENT = "gradient"
-
-class MeanSquareError(LossFunction):
-    def loss(self, prediction, reality):
-        return (prediction - reality) ** 2
 
 class Neuron:
     inputs = []
@@ -59,7 +56,8 @@ class Neuron:
         self.weights[self.index] = None
 
     def calculateError(self, reality):
-        return self.loss(LOSS, self.outputs, reality)
+        # return self.loss(LOSS, self.outputs, reality)
+        return sum([(p - r) ** 2 for r, p in zip(reality, self.outputs)]) / len(reality)
 
     def wipe(self) -> None:
         self.inputs = self.outputs = []
@@ -109,7 +107,8 @@ class CrystallineNeuralNetwork:
             for index in range(len(outputs)):
                 ix = 0
                 for output in outputs:
-                    ix += output[index]
+                    if output[index] != None:
+                        ix += output[index]
                 inputs.append(ix)
         
         return inputs
@@ -117,7 +116,7 @@ class CrystallineNeuralNetwork:
     def feedback(self, reality: list[Union[int, float]], adjustment: int=1) -> None:
         assert len(reality) == len(self), "Must feed exactly one reality element to each neuron (len(reality) != len(crystal))"
 
-        errors = [neuron.calculateError(real) for neuron, real in zip(self, reality)]
+        errors = [neuron.calculateError(reality) for neuron in self]
         adjustedErrors = errors
 
         for epoch in range(adjustment):
@@ -130,21 +129,25 @@ class CrystallineNeuralNetwork:
                     else:
                         outputtedErrors.append(adjustedErrors[otherNeuron.index])
 
-                newError.append(math.sqrt(sum([
+                newError.append(sum([
                     (outputtedErrors[index] * neuron.weights[index]) ** 2 \
                     for index in range(len(neuron)) \
-                    if outputtedErrors[index] != None and neuron.weights[index] != None
-                ])))
+                    if outputtedErrors[index] != None # and neuron.weights[index] != None
+                ]))
+            
+            adjustedErrors.append(newError)
 
-            adjustedErrors = newError
+        print("\n", repr(adjustedErrors))
 
         for neuron, error in zip(self, adjustedErrors):
             neuron.bias -= error
             for index, weight in enumerate(neuron):
                 if weight != None:
-                    neuron.weights[index] = weight - adjustedError[index]
+                    delta = weight - adjustedErrors[index]
+                    neuron.weights[index] -= delta 
 
     def train(self, inputs, reality, epochs: int, adjustment: int) -> None:
+        assert len(inputs) == len(reality), "Must have equal input and desired output samples."
         for inp, real in zip(inputs, reality):
             self.transform(inp, epochs)
             self.feedback(real, adjustment)
