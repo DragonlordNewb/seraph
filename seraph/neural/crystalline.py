@@ -2,17 +2,16 @@ import numpy as np
 from typing import Union
 import math
 
-from seraph.common import ActivationFunction
+from seraph.common import ActivationFunction, LossFunction, Sigmoid
 
 ACTIVATION = "activation"
 DERIVATIVE = "derivative"
+LOSS = "loss"
+GRADIENT = "gradient"
 
-class Sigmoid(ActivationFunction):
-	def activation(self, x):
-		return 1 / (1 + math.exp(-x))
-
-	def derivative(self, x):
-		return self.activation(x) * (1 - self.activation(x))
+class MeanSquareError(LossFunction):
+    def loss(self, prediction, reality):
+        return (prediction - reality) ** 2
 
 class Neuron:
     inputs = []
@@ -21,8 +20,9 @@ class Neuron:
     index = 0
     bias = 0
 
-    def __init__(self, activation: ActivationFunction=Sigmoid()):
+    def __init__(self, activation: ActivationFunction=Sigmoid(), loss: LossFunction=MeanSquareError()):
         self.activation = activation
+        self.loss = loss
 
     def __repr__(self) -> str:
         return "<seraph.neural.crystalline.Neuron>"
@@ -58,12 +58,15 @@ class Neuron:
         self.index = index
         self.weights[self.index] = None
 
+    def calculateError(self, reality):
+        return self.loss(LOSS, self.outputs, reality)
+
 class CrystallineNeuralNetwork:
     inputs = []
     outputs = []
 
-    def __init__(self, activation: ActivationFunction=Sigmoid() size: int=100, mu: int=1, sigma: int=0.1) -> None:
-        self.neurons = [Neuron(activation) for _ in range(size)]
+    def __init__(self, activation: ActivationFunction=Sigmoid(), loss: LossFunction=MeanSquareError(), size: int=100, mu: int=1, sigma: int=0.1) -> None:
+        self.neurons = [Neuron(activation, loss) for _ in range(size)]
 
         for index, neuron in enumerate(self):
             neuron.configure(size, index, mu, sigma)
@@ -103,8 +106,27 @@ class CrystallineNeuralNetwork:
         
         return inputs
 
-    def feedback(self, reality: list[Union[int, float]], recursion: int=1) -> None:
+    def feedback(self, reality: list[Union[int, float]], adjustment: int=1) -> None:
         assert len(reality) == len(self), "Must feed exactly one reality element to each neuron (len(reality) != len(crystal))"
 
-        
+        errors = [neuron.calculateError(real) for neuron, real in zip(self, reality)]
+        adjustedErrors = errors
+
+        for epoch in range(adjustment):
+            newError = []
+            for neuron in self:
+                outputtedErrors = []
+                for otherNeuron in self:
+                    if neuron.index == otherNeuron.index:
+                        outputtedErrors.append(None)
+                    else:
+                        outputtedErrors.append(adjustedErrors[otherNeuron.index])
+
+                newError.append(math.sqrt(sum([
+                    (outputtedErrors[index] * neuron.weights[index]) ** 2 \
+                    for index in range(len(neuron)) \
+                    if outputtedErrors[index] != None and neuron.weights[index] != None
+                ])))
+
+            adjustedError = newError
 
