@@ -143,3 +143,8 @@ class CrystallineNeuralNetwork:
             for index, weight in enumerate(neuron):
                 if weight != None:
                     neuron.weights[index] = weight - adjustedError[index]
+
+    def train(self, inputs, reality, epochs: int, adjustment: int) -> None:
+        for inp, real in zip(inputs, reality):
+            self.transform(inp, epochs)
+            self.feedback(real, adjustment)
