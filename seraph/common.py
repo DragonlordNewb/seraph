@@ -90,4 +90,17 @@ class LossFunction:
 			delta /= 2 * scale
 			output[index] = delta
 		return output
+	
+class Sigmoid(ActivationFunction):
+	def activation(self, x):
+		return 1 / (1 + math.exp(-x))
+
+	def derivative(self, x):
+		return self.activation(x) * (1 - self.activation(x))
+
+class MeanSquareError(LossFunction):
+	def loss(self, reality, prediction):
+		assert len(reality) == len(prediction), "Can't compare reality and prediction arguments of different length."
+		return sum([(p - r) ** 2 for r, p in zip(reality, prediction)]) / len(reality)
+
 		raise SyntaxError("\"mode\" argument of calling an ActivationFunction must be ACTIVATION or DERIVATIVE.")
