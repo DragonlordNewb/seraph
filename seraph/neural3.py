@@ -5,6 +5,8 @@ from seraph import utils
 
 ACTIVATION = "activation"
 DERIVATIVE = "derivative"
+LOSS = "loss"
+GRADIENT = "gradient"
 INPUT = 0
 OUTPUT = -1
 
@@ -24,17 +26,59 @@ class ActivationFunction:
 	
 	def __call__(self, mode: ACTIVATION or DERIVATIVE, x: Union[int, float]) -> Union[int, float]:
 		if mode == ACTIVATION:
+			if type(x) == list:
+				return [self(ACTIVATION, y) for y in x]
 			return self.activation(x)
 		elif mode == DERIVATIVE:
+			if type(x) == list:
+				return [self(DERIVATIVE, y) for y in x]
 			return self.derivative(x)
 		raise SyntaxError("\"mode\" argument of calling an ActivationFunction must be ACTIVATION or DERIVATIVE.")
-		
+
+class LossFunction:
+	def __init__(self, loss=None, gradient=None) -> None:
+		if loss != None:
+			self.loss = loss
+		if gradient != None:
+			self.gradient = gradient
+		assert hasattr(self, "loss"), "Must subclass a \"loss(self, reality, prediction)\" method onto ActivationFunction class."
+		assert hasattr(self, "gradient"), "Must subclass a \"gradient(self, reality)\" method onto ActivationFunction class."
+		assert type(self(LOSS, [1, 0])) in [int, float], "Loss function must return an int or float."
+		assert type(self(GRADIENT, [1, 0])) in [int, float], "Loss function gradient must return an int or float."
+
+	def __repr__(self) -> str:
+		return "<seraph.LossFunction " + self.__name__ + ">"
+	
+	def __call__(self, mode: ACTIVATION or DERIVATIVE, x: Union[int, float], y: Union[int or float]=None) -> Union[int, float]:
+		if mode == LOSS:
+			return self.loss(x, y)
+		elif mode == GRADIENT:
+			return self.gradient(x)
+		raise SyntaxError("\"mode\" argument of calling an LossFunction must be GRADIENT or LOSS.")
+
+	def gradient(self, reality, scale: int=0.1):
+		length = len(reality)
+		output = [0] * length
+		for index in range(length):
+			vect1 = vect2 = [0] * length
+			vect1[index] = scale
+			vect2[index] = -scale
+			delta = self.loss(reality, vect1) - self.loss(reality, vect2)
+			delta /= 2 * scale
+			output[index] = delta
+		return output
+
 class Sigmoid(ActivationFunction):
 	def activation(self, x):
 		return 1 / (1 + math.exp(-x))
 
 	def derivative(self, x):
 		return self.activation(x) * (1 - self.activation(x))
+
+class MeanSquareError(LossFunction):
+	def loss(self, reality, prediction):
+		assert len(reality) == len(prediction), "Can't compare reality and prediction arguments of different length."
+		return sum([(p - r) ** 2 for r, p in zip(reality, prediction)]) / len(reality)
 
 class Neuron:
 	parentLayer = None
@@ -148,8 +192,9 @@ class Layer:
 			neuron.wipe()
 
 class FeedforwardNeuralNetwork:
-	def __init__(self, *layers: list[Layer]) -> None:
+	def __init__(self, *layers: list[Layer], loss: LossFunction=MeanSquareError()) -> None:
 		self.layers = layers
+		self.loss = loss
 
 	def __repr__(self) -> str:
 		return "<seraph.FeedforwardNeuralNetwork with layers\n" + "\n  ".join([repr(layer) for layer in self]) + "\n(length " + str(len(self)) + ")>"
@@ -186,3 +231,8 @@ class FeedforwardNeuralNetwork:
 			layer.run()
 
 		return self[OUTPUT].outputs
+
+	def backpropagate(self, *reality: list[Union[int, float]]) -> None:
+		outputLayerGradient = self.loss(GRADIENT, list(reality) self[OUTPUT].outputs)
+		outputInverse = [neuron.activation(DERIVATIVE, neuron.output) for neuron in self[OUTPUT]]
+		outputError = [x * y for x, y in zip(outputLayerGradient, outputInverse)]

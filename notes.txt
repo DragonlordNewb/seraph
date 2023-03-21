@@ -1,4 +1,6 @@
-During the forward phase, we compute the activations of all neurons in the network, starting from the input layer and working our way towards the output layer. For each neuron i in layer l, we compute the activation a_i^l as:
+During the forward phase, we compute the activations of all neurons in the network, 
+starting from the input layer and working our way towards the output layer. For each 
+neuron i in layer l, we compute the activation a_i^l as:
 
 a_i^l = f(z_i^l)
 
@@ -6,32 +8,41 @@ where z_i^l is the weighted sum of the inputs to neuron i in layer l:
 
 z_i^l = ∑_j (w_ij^l a_j^{l-1} + b_i^l)
 
-During the backward phase, we compute the error of the output compared to the desired output, and then use this error to update the weights and biases of the network.
+During the backward phase, we compute the error of the output compared to the desired 
+output, and then use this error to update the weights and biases of the network.
 
-Let's denote the error at the output layer as δ^L, and the error at layer l as δ^l. The error at the output layer can be computed as:
+Let's denote the error at the output layer as δ^L, and the error at layer l as δ^l. The 
+error at the output layer can be computed as:
 
 δ^L = ∇_a L ⊙ f'(z^L)
 
-where L is the loss function, ∇_a L is the gradient of L with respect to the output Y, and ⊙ denotes element-wise multiplication. The derivative of the activation function f is denoted by f'.
+where L is the loss function, ∇_a L is the gradient of L with respect to the output Y, and 
+⊙ denotes element-wise multiplication. The derivative of the activation function f is 
+denoted by f'.
 
 The error at any layer l can be computed as:
 
 δ^l = ((W^{l+1})^T δ^{l+1}) ⊙ f'(z^l)
 
-where (W^{l+1})^T is the transpose of the weight matrix connecting layer l+1 to layer l, and ⊙ denotes element-wise multiplication.
+where (W^{l+1})^T is the transpose of the weight matrix connecting layer l+1 to layer l, 
+and ⊙ denotes element-wise multiplication.
 
-Once we have computed the error at each layer, we can update the weights and biases of the network using the following formulas:
+Once we have computed the error at each layer, we can update the weights and biases of 
+the network using the following formulas:
 
 Δb_i^l = η δ_i^l
 
 Δw_ij^l = η a_j^{l-1} δ_i^l
 
-where η is the learning rate. These formulas update the biases and weights by the negative gradient of the loss function with respect to the biases and weights, respectively.
+where η is the learning rate. These formulas update the biases and weights by the negative 
+gradient of the loss function with respect to the biases and weights, respectively.
 
-Finally, we can update the weights and biases of the network by subtracting the changes from the previous values:
+Finally, we can update the weights and biases of the network by subtracting the changes 
+from the previous values:
 
 b_i^l → b_i^l + Δb_i^l
 
 w_ij^l → w_ij^l + Δw_ij^l
 
-These updates are typically applied iteratively until the error of the network is minimized to a desired level.
+These updates are typically applied iteratively until the error of the network is 
+minimized to a desired level.
