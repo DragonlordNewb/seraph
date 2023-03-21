@@ -169,3 +169,75 @@ class Layer:
 	def wipe(self) -> None:
 		for neuron in self:
 			neuron.wipe()
+
+class FeedforwardNeuralNetwork:
+	def __init__(self, *layers: list[Layer], loss: LossFunction=MeanSquareError()) -> None:
+		self.layers = layers
+		self.loss = loss
+
+	def __repr__(self) -> str:
+		return "<seraph.FeedforwardNeuralNetwork with layers\n" + "\n  ".join([repr(layer) for layer in self]) + "\n(length " + str(len(self)) + ")>"
+
+	def __len__(self) -> int:
+		return len(self.layers)
+
+	def __iter__(self) -> object:
+		self.n = -1
+		return self
+
+	def __next__(self) -> Layer:
+		self.n += 1
+		if self.n >= len(self):
+			raise StopIteration
+		return self[self.n]
+
+	def __getitem__(self, index: int) -> Layer:
+		return self.layers[index]
+
+	def __lshift__(self, inputs: list[Union[int, float]]) -> None:
+		self[INPUT] << inputs
+
+	def reversed(self) -> list[Layer]:
+		return [layer for layer in self][::-1]
+
+	def wipe(self) -> None:
+		for layer in self:
+			layer.wipe()
+
+	def predict(self, *inputs) -> list[Union[int, float]]:
+		self.wipe()
+
+		self << inputs
+
+		for layer in self:
+			layer.run()
+
+		return self[OUTPUT].outputs
+
+	def backpropagate(self, *reality: list[Union[int, float]], learningRate: int=0.01) -> list[Union[int, float]]:
+		outputLayerGradient = self.loss(GRADIENT, list(reality), self[OUTPUT].outputs)
+		outputInverse = [neuron.activation(DERIVATIVE, neuron.output) for neuron in self[OUTPUT]]
+		outputError = [x * y for x, y in zip(outputLayerGradient, outputInverse)]
+
+		errors = [outputError]
+
+		for layer in enumerate(list(self.reversed())[1:]):
+
+			# δ^l = ((W^{l+1})^T δ^{l+1}) ⊙ f'(z^l)
+			errors.append([x * y for x, y in zip(errors[-1], layer.weightMatrix())])
+
+		errors = errors[::-1]
+
+		for layerIndex, layer in enumerate(self):
+			for neuronIndex, neuron in enumerate(layer):
+				neuron.bias += learningRate * errors[layerIndex][neuronIndex]
+				for index, weight in enumerate(neuron.weights):
+					neuron.weights[index] += learningRate * neuron.output * errors[layerIndex][neuronIndex]
+
+		return errors
+
+	def train(self, samples: list[tuple[list[Union[int, float]], list[Union[int, float]]]], epochs: int=1000, learningRate: int=0.01) -> None:
+		for epoch in range(epochs):
+			for inputs, outputs in samples:
+				self.predict(inputs)
+				self.backpropagate(*outputs, learningRate=learningRate)
