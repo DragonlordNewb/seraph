@@ -183,6 +183,9 @@ class Layer:
 		self.output = [~neuron for neuron in self]
 		return self.output
 
+	def weightMatrix(self) -> list[Union[int, float]]:
+		return [sum(neuron.weights) / len(neuron.weights) for neuron in self]
+
 	def run(self) -> list[Union[int, float]]:
 		self.output = [neuron.run() for neuron in self]
 		return self.output
@@ -218,6 +221,9 @@ class FeedforwardNeuralNetwork:
 	def __lshift__(self, inputs: list[Union[int, float]]) -> None:
 		self[INPUT] << inputs
 
+	def reversed(self) -> list[Layer]:
+		return [layer for layer in self][::-1]
+
 	def wipe(self) -> None:
 		for layer in self:
 			layer.wipe()
@@ -232,7 +238,30 @@ class FeedforwardNeuralNetwork:
 
 		return self[OUTPUT].outputs
 
-	def backpropagate(self, *reality: list[Union[int, float]]) -> None:
-		outputLayerGradient = self.loss(GRADIENT, list(reality) self[OUTPUT].outputs)
+	def backpropagate(self, *reality: list[Union[int, float]], learningRate: int=0.01) -> list[Union[int, float]]:
+		outputLayerGradient = self.loss(GRADIENT, list(reality), self[OUTPUT].outputs)
 		outputInverse = [neuron.activation(DERIVATIVE, neuron.output) for neuron in self[OUTPUT]]
 		outputError = [x * y for x, y in zip(outputLayerGradient, outputInverse)]
+
+		errors = [outputError]
+
+		for layer in enumerate(list(self.reversed())[1:]):
+
+			# δ^l = ((W^{l+1})^T δ^{l+1}) ⊙ f'(z^l)
+			errors.append([x * y for x, y in zip(errors[-1], layer.weightMatrix())])
+
+		errors = errors[::-1]
+
+		for layerIndex, layer in enumerate(self):
+			for neuronIndex, neuron in enumerate(layer):
+				neuron.bias += learningRate * errors[layerIndex][neuronIndex]
+				for index, weight in enumerate(neuron.weights):
+					neuron.weights[index] += learningRate * neuron.output * errors[layerIndex][neuronIndex]
+
+		return errors
+
+	def train(self, samples: list[tuple[list[Union[int, float]], list[Union[int, float]]]], epochs: int=1000, learningRate: int=0.01) -> None:
+		for epoch in range(epochs):
+			for inputs, outputs in samples:
+				self.predict(inputs)
+				self.backpropagate(*outputs, learningRate=learningRate)
