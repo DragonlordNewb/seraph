@@ -2,7 +2,7 @@ from typing import Union
 import math
 
 from seraph import utils
-from seraph.common import ActivationFunction
+from seraph.common import ActivationFunction, LossFunction, Sigmoid, MeanSquareError
 
 ACTIVATION = "activation"
 DERIVATIVE = "derivative"
@@ -10,39 +10,6 @@ LOSS = "loss"
 GRADIENT = "gradient"
 INPUT = 0
 OUTPUT = -1
-
-class LossFunction:
-	def __init__(self, loss=None, gradient=None) -> None:
-		if loss != None:
-			self.loss = loss
-		if gradient != None:
-			self.gradient = gradient
-		assert hasattr(self, "loss"), "Must subclass a \"loss(self, reality, prediction)\" method onto ActivationFunction class."
-		assert hasattr(self, "gradient"), "Must subclass a \"gradient(self, reality)\" method onto ActivationFunction class."
-		assert type(self(LOSS, [1, 0])) in [int, float], "Loss function must return an int or float."
-		assert type(self(GRADIENT, [1, 0])) in [int, float], "Loss function gradient must return an int or float."
-
-	def __repr__(self) -> str:
-		return "<seraph.LossFunction " + self.__name__ + ">"
-	
-	def __call__(self, mode: ACTIVATION or DERIVATIVE, x: Union[int, float], y: Union[int or float]=None) -> Union[int, float]:
-		if mode == LOSS:
-			return self.loss(x, y)
-		elif mode == GRADIENT:
-			return self.gradient(x)
-		raise SyntaxError("\"mode\" argument of calling an LossFunction must be GRADIENT or LOSS.")
-
-	def gradient(self, reality, scale: int=0.1):
-		length = len(reality)
-		output = [0] * length
-		for index in range(length):
-			vect1 = vect2 = [0] * length
-			vect1[index] = scale
-			vect2[index] = -scale
-			delta = self.loss(reality, vect1) - self.loss(reality, vect2)
-			delta /= 2 * scale
-			output[index] = delta
-		return output
 
 class Sigmoid(ActivationFunction):
 	def activation(self, x):
