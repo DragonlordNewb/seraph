@@ -61,6 +61,9 @@ class Neuron:
     def calculateError(self, reality):
         return self.loss(LOSS, self.outputs, reality)
 
+    def wipe(self) -> None:
+        self.inputs = self.outputs = []
+
 class CrystallineNeuralNetwork:
     inputs = []
     outputs = []
@@ -90,7 +93,12 @@ class CrystallineNeuralNetwork:
     def __getitem__(self, index: int) -> Neuron:
         return self.neurons[index]
 
+    def wipe(self) -> None:
+        for neuron in self:
+            neuron.wipe()
+
     def transform(self, inputs: list[Union[int or float]], epochs: int=1) -> list[Union[int, float]]:
+        self.wipe()
         assert len(inputs) == len(self), "Must feed exactly one input to each neuron."
 
         # Sometime, you should write out an explanation for the "rotosum matrix transform".
@@ -128,5 +136,10 @@ class CrystallineNeuralNetwork:
                     if outputtedErrors[index] != None and neuron.weights[index] != None
                 ])))
 
-            adjustedError = newError
+            adjustedErrors = newError
 
+        for neuron, error in zip(self, adjustedErrors):
+            neuron.bias -= error
+            for index, weight in enumerate(neuron):
+                if weight != None:
+                    neuron.weights[index] = weight - adjustedError[index]
