@@ -3,7 +3,10 @@
 # OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
 
 import random
+from typing import Union
 import warnings
+import math
+from seraph import utils
 
 UNKNOWN = 0
 DELTA = "DELTA"
@@ -11,6 +14,10 @@ ABSOLUTE = "ABSOLUTE"
 ACTION = "ACTION"
 REACTION = "REACTION"
 SEQBREAK = "SEQBREAK"
+ACTIVATION = "activation"
+DERIVATIVE = "derivative"
+LOSS = "loss"
+GRADIENT = "gradient"
 
 def plusOrMinus(x: int, n: int) -> int:
     return x + random.randint(-n, n)
@@ -41,8 +48,8 @@ class ActivationFunction:
 			self.derivative = derivative
 		assert hasattr(self, "activation"), "Must subclass a \"activation(self, x)\" method onto ActivationFunction class."
 		assert hasattr(self, "derivative"), "Must subclass a \"derivative(self, x)\" method onto ActivationFunction class."
-		assert type(self(ACTIVATION, [1, 0])) in [int, float], "Activation function must return an int or float."
-		assert type(self(DERIVATIVE, [1, 0])) in [int, float], "Derivative function must return an int or float."
+		assert type(self(ACTIVATION, [1, 0])[0]) in [int, float], "Activation function must return an int or float, not " + type(self(ACTIVATION, [1, 0])).__name__ + "."
+		assert type(self(DERIVATIVE, [1, 0])[0]) in [int, float], "Derivative function must return an int or float."
 		
 	def __repr__(self) -> str:
 		return "<seraph.ActivationFunction " + self.__name__ + ">"
@@ -66,8 +73,8 @@ class LossFunction:
 			self.gradient = gradient
 		assert hasattr(self, "loss"), "Must subclass a \"loss(self, reality, prediction)\" method onto ActivationFunction class."
 		assert hasattr(self, "gradient"), "Must subclass a \"gradient(self, reality)\" method onto ActivationFunction class."
-		assert type(self(LOSS, [1, 0])) in [int, float], "Loss function must return an int or float."
-		assert type(self(GRADIENT, [1, 0])) in [int, float], "Loss function gradient must return an int or float."
+		assert type(self(LOSS, [1, 0], [0, 1])) in [int, float], "Loss function must return an int or float."
+		assert type(self(GRADIENT, [1, 0])[0]) in [int, float], "Loss function gradient must return an int or float."
 
 	def __repr__(self) -> str:
 		return "<seraph.LossFunction " + self.__name__ + ">"
@@ -100,7 +107,7 @@ class Sigmoid(ActivationFunction):
 
 class MeanSquareError(LossFunction):
 	def loss(self, reality, prediction):
-		assert len(reality) == len(prediction), "Can't compare reality and prediction arguments of different length."
+		assert len(reality) == len(prediction), "Can't compare reality and prediction arguments of different length (reality == " + str(len(reality)) + " != prediction == " + str(len(prediction)) + ")."
 		return sum([(p - r) ** 2 for r, p in zip(reality, prediction)]) / len(reality)
 
 		raise SyntaxError("\"mode\" argument of calling an ActivationFunction must be ACTIVATION or DERIVATIVE.")
