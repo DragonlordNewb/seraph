@@ -1,9 +1,12 @@
 import math
 import os
+import random
 from typing import Union
+import tqdm
 
 COMPUTATION = "computation"
 ADJUSTMENTS = "adjustments"
+LEARNING_RATE = 0.01
 
 BadModeError = RuntimeError("Neuron mode must be either \"computation\" or \"adjustments\".")
 
@@ -39,15 +42,15 @@ class Neuron:
             return False
         return self.id == other.id
 
-    def __div__(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
+    def setmode(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
         self.wipe()
         if mode not in [COMPUTATION, ADJUSTMENTS]:
             raise BadModeError
         self.mode = mode
         for axon in self.inputAxons:
-            axon / mode
+            axon.setmode(mode)
         for axon in self.outputAxons:
-            axon / mode
+            axon.setmode(mode)
 
     def __lshift__(self, value: int) -> Union[int, float]:
         if self.mode == COMPUTATION:
@@ -65,14 +68,14 @@ class Neuron:
                 val = self.calculate()
             else:
                 val = self.output
-            axon << val + bias
-            return val + bias
+            axon << val + self.bias
+            return val + self.bias
         elif self.mode == ADJUSTMENTS:
             axon << self.accumulatedError
             return self.accumulatedError
 
     def adjust(self) -> Union[int, float]:
-        self.bias -= self.accumulatedError / self.averageOutputWeight()
+        self.bias -= LEARNING_RATE * self.accumulatedError / self.averageOutputWeight()
         return self.bias
 
     def averageOutputWeight(self) -> Union[int, float]:
@@ -80,6 +83,11 @@ class Neuron:
 
     def averageInputWeight(self) -> Union[int, float]:
         return sum([axon.weight for axon in self.inputAxons])/ len(self.inputAxons)
+
+    def calculate(self) -> Union[int, float]:
+        calc = sigmoid(sum(self.inputs))
+        self.output = calc
+        return calc
 
     def pump(self) -> None:
         if self.mode == COMPUTATION:
@@ -109,7 +117,7 @@ class Axon:
         if self not in self.back.inputAxons:
             self.back.inputAxons.append(self)
 
-    def __div__(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
+    def setmode(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
         if mode not in [COMPUTATION, ADJUSTMENTS]:
             raise BadModeError
         self.mode = mode
@@ -119,7 +127,7 @@ class Axon:
             self.back << value * self.weight
         elif self.mode == ADJUSTMENTS:
             self.front << value * self.weight
-            self.weight /= value
+            self.weight /= value * LEARNING_RATE
 
 class CrystallineNeuralNetwork:
     axons = []
@@ -132,7 +140,7 @@ class CrystallineNeuralNetwork:
             for otherNeuron in self - neuron:
                 self.axons.append(Axon(neuron, otherNeuron))
 
-        self / COMPUTATION
+        self.setmode(COMPUTATION)
 
     def __repr__(self) -> str:
         return "<seraph.neural.crystalline2.CrystallineNeuralNetwork with " + str(len(self)) + " neurons>"
@@ -153,9 +161,9 @@ class CrystallineNeuralNetwork:
     def __getitem__(self, index: int) -> Neuron:
         return self.neurons[index]
 
-    def __div__(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
+    def setmode(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
         for neuron in self:
-            neuron / mode
+            neuron.setmode(mode)
 
     def __sub__(self, neuron: Neuron) -> list[Neuron]:
         return [n for n in self if n != Neuron]
@@ -169,9 +177,10 @@ class CrystallineNeuralNetwork:
             neuron.adjust()
 
     def backpropagate(self, reality: list[Union[int, float]], iterations: int=1) -> None:
-        self / ADJUSTMENTS
-        for neuron in self:
-            neuron.accumulatedError = neuron.output - reality
+        self.setmode(ADJUSTMENTS)
+        for index, neuron in enumerate(self):
+            neuron.calculate()
+            neuron.accumulatedError = neuron.output - reality[index]
         for iteration in range(iterations):
             self.pump()
             self.adjust()
@@ -184,7 +193,7 @@ class CrystallineNeuralNetwork:
             neuron.calculate()
 
     def predict(self, inputs: list[Union[int, float]], iterations: int=1):
-        self / COMPUTATION
+        self.setmode(COMPUTATION)
         self << inputs
         for iteration in range(iterations):
             self.calculate()
@@ -201,7 +210,7 @@ class CrystallineNeuralNetwork:
             neuron.inputs = []
 
     def adapt(self, inputs: list[Union[int, float]], reality: list[Union[int, float]], epochs: int=1000, iterations: int=1) -> None:
-        for epoch in range(epochs):
+        for epoch in tqdm.tqdm(range(epochs), desc="Training neural network"):
             self.wipe()
             self.predict(inputs, iterations)
             self.backpropagate(reality, iterations)
