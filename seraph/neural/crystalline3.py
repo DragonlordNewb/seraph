@@ -53,7 +53,9 @@ class Neuron:
 
     def __lshift__(self, value: Value) -> None:
         if value.origin in self.inputs:
-            self.
+            self.inputs.append(~value)
+        elif value.origin in self.outputs:
+            self.accumulatedError += ~value
 
     def pump(self, value: float, mode: COMPUTE or ADJUST=COMPUTE):
         if mode == COMPUTE:
@@ -62,8 +64,6 @@ class Neuron:
             axons = self.inputs
         for axon in axons:
             axon << Value(self, value)
-
-    def 
     
 class Axon:
     """
@@ -81,6 +81,10 @@ class Axon:
 
     def __lshift__(self, value: Value) -> None:
         if value.origin == self.front:
-            self.back << Value((~value) * self.weight)
+            self.back << Value((~value) * self.weight, self)
         elif value.origin == self.back:
-            self.front << Value((~value) * self.weight)
+            self.front << Value((~value) * self.weight, self)
+
+class CrystallineNeuralNetwork:
+    def __init__(self, size: int=100):
+        pass
