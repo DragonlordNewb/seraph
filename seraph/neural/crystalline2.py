@@ -40,9 +40,14 @@ class Neuron:
         return self.id == other.id
 
     def __div__(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
+        self.wipe()
         if mode not in [COMPUTATION, ADJUSTMENTS]:
             raise BadModeError
         self.mode = mode
+        for axon in self.inputAxons:
+            axon / mode
+        for axon in self.outputAxons:
+            axon / mode
 
     def __lshift__(self, value: int) -> Union[int, float]:
         if self.mode == COMPUTATION:
@@ -66,6 +71,16 @@ class Neuron:
             axon << self.accumulatedError
             return self.accumulatedError
 
+    def adjust(self) -> Union[int, float]:
+        self.bias -= self.accumulatedError / self.averageOutputWeight()
+        return self.bias
+
+    def averageOutputWeight(self) -> Union[int, float]:
+        return sum([axon.weight for axon in self.outputAxons]) / len(self.outputAxons)
+
+    def averageInputWeight(self) -> Union[int, float]:
+        return sum([axon.weight for axon in self.inputAxons])/ len(self.inputAxons)
+
     def pump(self) -> None:
         if self.mode == COMPUTATION:
             axons = self.outputAxons
@@ -75,14 +90,36 @@ class Neuron:
         for axon in axons:
             self >> axon
 
+    def wipe(self) -> None:
+        self.output = None
+        self.outputGenerated = False
+        self.inputs = []
+        self.accumulatedError = 0
+
 class Axon:
     mode = COMPUTATION
-    
+    weight = (random.random() - 0.5) * 2
+
     def __init__(self, front: Neuron, back: Neuron) -> None:
         self.front = front
         self.back = back
 
-    def __lshift__(self, value: Union[int, float]) -> None
+        if self not in self.front.outputAxons:
+            self.front.outputAxons.append(self)
+        if self not in self.back.inputAxons:
+            self.back.inputAxons.append(self)
+
+    def __div__(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
+        if mode not in [COMPUTATION, ADJUSTMENTS]:
+            raise BadModeError
+        self.mode = mode
+
+    def __lshift__(self, value: Union[int, float]) -> None:
+        if self.mode == COMPUTATION:
+            self.back << value * self.weight
+        elif self.mode == ADJUSTMENTS:
+            self.front << value * self.weight
+            self.weight /= value
 
 class CrystallineNeuralNetwork:
     axons = []
@@ -90,6 +127,12 @@ class CrystallineNeuralNetwork:
     def __init__(self, size: int=100) -> None:
         self.neurons = [Neuron() for _ in range(size)]
         self.size = size
+
+        for neuron in self:
+            for otherNeuron in self - neuron:
+                self.axons.append(Axon(neuron, otherNeuron))
+
+        self / COMPUTATION
 
     def __repr__(self) -> str:
         return "<seraph.neural.crystalline2.CrystallineNeuralNetwork with " + str(len(self)) + " neurons>"
@@ -113,3 +156,55 @@ class CrystallineNeuralNetwork:
     def __div__(self, mode: COMPUTATION or ADJUSTMENTS) -> None:
         for neuron in self:
             neuron / mode
+
+    def __sub__(self, neuron: Neuron) -> list[Neuron]:
+        return [n for n in self if n != Neuron]
+
+    def __lshift__(self, inputs: list[Union[int, float]]) -> None:
+        for neuron, inp in zip(self, inputs):
+            neuron << inp
+
+    def adjust(self) -> None:
+        for neuron in self:
+            neuron.adjust()
+
+    def backpropagate(self, reality: list[Union[int, float]], iterations: int=1) -> None:
+        self / ADJUSTMENTS
+        for neuron in self:
+            neuron.accumulatedError = neuron.output - reality
+        for iteration in range(iterations):
+            self.pump()
+            self.adjust()
+
+    def biases(self) -> list[Union[int, float]]:
+        return [neuron.bias for neuron in self]
+
+    def calculate(self) -> None:
+        for neuron in self:
+            neuron.calculate()
+
+    def predict(self, inputs: list[Union[int, float]], iterations: int=1):
+        self / COMPUTATION
+        self << inputs
+        for iteration in range(iterations):
+            self.calculate()
+            self.resetInputs()
+            self.pump()
+        return [neuron.output for neuron in self]
+
+    def pump(self) -> None:
+        for neuron in self:
+            neuron.pump()
+
+    def resetInputs(self) -> None:
+        for neuron in self:
+            neuron.inputs = []
+
+    def adapt(self, inputs: list[Union[int, float]], reality: list[Union[int, float]], epochs: int=1000) -> None:
+
+    def weights(self) -> list[Union[int, float]]:
+        return [axon.weight for axon in self.axons]
+
+    def wipe(self):
+        for neuron in self:
+            neuron.wipe()
