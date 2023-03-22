@@ -47,7 +47,7 @@ class Neuron:
             obj << Value(self.error, self)
 
     def calculate(self) -> float:
-        calculation = Value(sigmoid(sum(self.inputValues) / len(self.inputValues)), self)
+        calculation = Value(sigmoid(sum(self.inputValues) / len(self.inputValues)) + self.bias, self)
         self.inputValues = []
         return calculation
 
@@ -105,3 +105,15 @@ class Layer:
     def propagateError(self) -> None:
         for neuron in self:
             neuron.propagateError()
+
+    def outputs(self) -> list[float]:
+        return [neuron.calculate() for neuron in self]
+
+class FeedforwardNeuralNetwork:
+    def __init__(self, *layers: list[Layer]) -> None:
+        self.layers = []
+        for layer in layers:
+            if type(layer) == Layer:
+                self.layers.append(layer)
+            else:
+                self.layers.append(Layer(layer))
