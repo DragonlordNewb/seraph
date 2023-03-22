@@ -200,7 +200,11 @@ class CrystallineNeuralNetwork:
         for neuron in self:
             neuron.inputs = []
 
-    def adapt(self, inputs: list[Union[int, float]], reality: list[Union[int, float]], epochs: int=1000) -> None:
+    def adapt(self, inputs: list[Union[int, float]], reality: list[Union[int, float]], epochs: int=1000, iterations: int=1) -> None:
+        for epoch in range(epochs):
+            self.wipe()
+            self.predict(inputs, iterations)
+            self.backpropagate(reality, iterations)
 
     def weights(self) -> list[Union[int, float]]:
         return [axon.weight for axon in self.axons]
