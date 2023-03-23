@@ -54,7 +54,7 @@ class MarkovChain:
             link.parent = self
 
     def __repr__(self) -> str:
-        "<seraph.markov.MarkovChain containing " + ", ".join([repr(link) for link in self]) + ">"
+        "<seraph.markov.MarkovChain containing " + str(len(self)) + " links>"
 
     def __len__(self) -> int:
         return len(self.links)
