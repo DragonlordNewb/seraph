@@ -44,3 +44,8 @@ def test_02():
 	print(nn.predict([5]))
 	print(nn.predict([6]))
 	print(nn.predict([7]))
+
+def test_03():
+	from seraph.neural import feedforward2 as ff 
+
+	nn = ff.FeedforwardNeuralNetwork(3, 5, 5, 5, 5, 5, 3)

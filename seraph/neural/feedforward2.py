@@ -1,8 +1,9 @@
 import math
 import random
 
-FEEDFORWARD = "feedforward"
-BACKPROPAGATION = "backpropagation"
+INPUT = "input"
+OUTPUT = "output"
+HIDDEN = "hidden"
 
 BAD_MODE = RuntimeError("Mode must be \"feedforward\" or \"backpropagation\".")
 
@@ -76,7 +77,9 @@ class Axon:
 
 class Layer:
     def __init__(self, size: int=5) -> None:
-        self.neurons = [Neuron() for _ in range(size)]
+        self.neurons = []
+        for i in range(size):
+            self.neurons.append(Neuron())
 
     def __repr__(self) -> str:
         return "<seraph.neural.feedforward2.Layer with " + str(len(self)) + " neurons>"
@@ -112,8 +115,62 @@ class Layer:
 class FeedforwardNeuralNetwork:
     def __init__(self, *layers: list[Layer]) -> None:
         self.layers = []
+
         for layer in layers:
             if type(layer) == Layer:
                 self.layers.append(layer)
             else:
                 self.layers.append(Layer(layer))
+
+        self.axons = []
+
+        for index, layer in enumerate(self):
+            for neuron1 in layer:
+                for neuron2 in self[index]:
+                    self.axons.append(Axon(neuron1, neuron2))
+
+    def __repr__(self) -> str:
+        return "<seraph.neural.feedforward2.FeedforwardNeuralNetwork containing " + ", ".join([repr(layer) for layer in self]) + ">"
+
+    def __len__(self) -> int:
+        return len(self.layers)
+
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+    
+    def __next__(self) -> Layer:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self[self.n]
+
+    def __getitem__(self, index: int or str or slice) -> Layer or list[Layer]:
+        if type(index) == int:
+            return self.layers[index]
+        elif type(index) == str:
+            if index == OUTPUT:
+                return self[-1]
+            elif index == INPUT:
+                return self[0]
+            elif index == HIDDEN:
+                return self[1:len(self) - 2]
+        elif type(index) == slice:
+            assert not index.step, "Can't use steps when iterating a FeedforwardNeuralNetwork."
+            assert index.start < index.stop, "Bad indices for slicing."
+            assert index.start > -1 and index.stop > -1 , "Can't use negative slices on a FeedforwardNeuralNetwork."
+
+            output = []
+            for i, layer in enumerate(self):
+                if index.start <= i <= index.stop:
+                    output.append(layer)
+
+            return output
+
+        raise TypeError("Can only index FeedforwardNeuralNetwork with an integer or slice.")
+
+    def feedforward(self, inputs: list[float]) -> list[float]:
+        self[INPUT] << inputs
+        for layer in self:
+            layer.pump()
+        return self[OUTPUT].outputs()
