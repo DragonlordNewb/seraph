@@ -9,6 +9,9 @@ class PointProperty(entity.Property):
         d = math.sqrt(sum([(x2 - x1) ** 2 for x1, x2 in zip(self, other)]))
         return 2 / (1 + math.exp(d))
 
+    def distance(self, other):
+        return math.sqrt(sum([(x2 - x1) ** 2 for x1, x2 in zip(self, other)]))
+
 class PointEntity(entity.Entity):
     def __init__(self, *coordinates: list[int], strictness: int=0.8) -> None:
         entity.Entity.__init__(self, PointProperty(coordinates, strictness=strictness), strictness=strictness)
