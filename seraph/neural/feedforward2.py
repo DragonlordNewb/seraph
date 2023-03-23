@@ -57,6 +57,7 @@ class Neuron:
             self >> output
 
     def propagateError(self) -> None:
+        self.bias -= self.error
         for inp in self.inputs:
             self >> inp
 
