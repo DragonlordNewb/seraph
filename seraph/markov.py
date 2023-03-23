@@ -38,6 +38,7 @@ class MarkovLink:
     def __eq__(self, other: str or object) -> bool:
         return self.id == other.id
 
+class StochasticMarkovLink(MarkovLink):
     def evaluate(self):
         output = random.choices(self.names, self.probability)
         if self.parent:
@@ -78,6 +79,8 @@ class MarkovChain:
         output = []
         while n > 0:
             nxt = self.currentState.evaluate()
+            if type(nxt) == str:
+                nxt = self[nxt]
             output.append(nxt)
             self.currentState = nxt
             n -= 1
