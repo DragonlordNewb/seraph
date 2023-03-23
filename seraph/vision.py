@@ -42,7 +42,17 @@ class Pixel:
         return sum([self % neighbor for neighbor in self.parent.neighbors(self)])
 
 class Edge:
-    pass
+    def __init__(self, pixel: Pixel) -> None:
+        self.pixels = [pixel]
+
+    def __repr__(self) -> str:
+        return "<seraph.vision.Edge of length " + str(len(self)) + ">"
+
+    def __len__(self) -> int:
+        return len(self.pixels)
+
+    def __lshift__(self, pixel: Pixel) -> None:
+        self.pixels.append(pixel)
 
 class Image:
     def __init__(self, pixels: list[list[Pixel]]) -> None:
