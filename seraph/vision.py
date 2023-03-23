@@ -17,6 +17,7 @@ class Pixel:
         self.colors = colors
         self.location = point.ExpandedPointEntity(x, y)
         self.parent: object = None
+        self.edge: object = None
 
     def __repr__(self) -> str:
         return "<seraph.vision.Pixel " + " ".join([key + "=" + str(val) for key, val in self])
@@ -37,13 +38,14 @@ class Pixel:
     def __mod__(self, other: object) -> int:
         assert self.colors.keys() == other.colors.keys(), "Can only compare Pixels of similar color dictionaries."
 
-        return sum([x2 - x1 for x1, x2 in zip(self.colors.keys(), other.colors.keys())])
+        return sum([abs(x2 - x1) for x1, x2 in zip(self.colors.keys(), other.colors.keys())])
 
     def __invert__(self) -> int:
         return sum([self % neighbor for neighbor in self.parent.neighbors(self)])
 
 class Edge:
     def __init__(self, pixel: Pixel) -> None:
+        pixel.edge = self
         self.pixels = [pixel]
 
     def __repr__(self) -> str:
@@ -71,8 +73,9 @@ class Edge:
                 return True
         return False
 
-    def __lshift__(self, pixel: Pixel) -> None:
+    def __lshift__(self, pixel: Pixel) -> bool:
         if pixel not in self:
+            pixel.edge = self
             self.pixels.append(pixel)
             return True
         return False
@@ -113,4 +116,6 @@ class Image:
     def neighbors(self, target: Pixel) -> list[Pixel]:
         return [pixel for pixel in self if pixel.location == target.location]
 
-    def mapEdges()
+    def mapEdges(self, threshold: int=256):
+        poi = [pixel for pixel in self if ~pixel >= threshold]
+        
