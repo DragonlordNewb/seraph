@@ -8,19 +8,14 @@ def fractionate(*inputs: list[float or int]):
     return [x / s for x in inputs]
 
 class MarkovLink:
-    def __init__(self, id: str, **links: dict[str: float]) -> None:
+    def __init__(self, id: str, **links: dict[str: any]) -> None:
         self.id = id
-        self.names, self.probabilities = links.keys(), links.values()
-
-        if sum(self.probabilities) not in [1, 1.0]:
-            self.probabilities = fractionate(self.probabilities)
-
-        assert len(list(set([type(probability) for probability in self.probabilities]))) == 1, "Probabilities must all be of the same type (float)."
+        self.names, self.links = links.keys(), links.values()
 
         self.parent = None
 
     def __repr__(self) -> str:
-        return "<seraph.markov.MarkovLink mapping " + ", ".join([name + " with " + reprPercent(probability) + " probability" for name, probability in self]) + ">"
+        return "<seraph.markov.MarkovLink>"
 
     def __len__(self) -> int:
         return len(self.names)
@@ -33,16 +28,21 @@ class MarkovLink:
         self.n += 1
         if self.n >= len(self):
             raise StopIteration
-        return (self.names[self.n], self.probabilities[self.n])
+        return (self.names[self.n], self.links[self.n])
 
     def __eq__(self, other: str or object) -> bool:
         return self.id == other.id
 
+class EvaluationMarkovLink(MarkovLink):
+    def evaluate(self):
+        for name, link in self:
+            if link():
+                return name
+        return self.id
+
 class StochasticMarkovLink(MarkovLink):
     def evaluate(self):
-        output = random.choices(self.names, self.probability)
-        if self.parent:
-            return self.parent[output]
+        output = random.choices(self.names, self.links)
         return output
 
 class MarkovChain:
