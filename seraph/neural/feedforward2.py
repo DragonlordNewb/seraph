@@ -97,10 +97,6 @@ class Layer:
             raise StopIteration
         return self.neurons[self.n]
 
-    def __lshift__(self, inputs: list[float]) -> None:
-        for neuron in self:
-            neuron << inputs
-
     def pump(self) -> None:
         for neuron in self:
             neuron.pump()
@@ -112,21 +108,36 @@ class Layer:
     def outputs(self) -> list[float]:
         return [neuron.calculate() for neuron in self]
 
+class InputLayer(Layer):
+    def __lshift__(self, inputs: list[float]) -> None:
+        for neuron in self:
+            neuron << inputs
+
+class OutputLayer(Layer):
+    def __lshift__(self, reality: list[float]) -> None:
+        for neuron, real in zip(self, reality):
+            neuron.error = neuron.calculate() - real
+
 class FeedforwardNeuralNetwork:
     def __init__(self, *layers: list[Layer]) -> None:
         self.layers = []
 
-        for layer in layers:
+        for index, layer in enumerate(layers):
             if type(layer) == Layer:
                 self.layers.append(layer)
             else:
-                self.layers.append(Layer(layer))
+                if index == 0:
+                    self.layers.append(InputLayer(layer))
+                elif index == len(layers) - 1:
+                    self.layers.append(OutputLayer(layer))
+                else:
+                    self.layers.append(Layer(layer))
 
         self.axons = []
 
-        for index, layer in enumerate(self):
-            for neuron1 in layer:
-                for neuron2 in self[index]:
+        for index in range(len(self) - 1):
+            for neuron1 in self[index]:
+                for neuron2 in self[index + 1]:
                     self.axons.append(Axon(neuron1, neuron2))
 
     def __repr__(self) -> str:
@@ -174,3 +185,8 @@ class FeedforwardNeuralNetwork:
         for layer in self:
             layer.pump()
         return self[OUTPUT].outputs()
+
+    def backpropagate(self, reality: list[float]) -> None:
+        self[OUTPUT] << reality
+        for layer in [l for l in self][::-1]:
+            layer.propagateError()
