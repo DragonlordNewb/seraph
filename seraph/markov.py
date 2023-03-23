@@ -77,6 +77,8 @@ class MarkovChain:
     def evaluate(self, n: int=1) -> list[MarkovLink]:
         output = []
         while n > 0:
-            output.append(self.currentState.evaluate())
+            nxt = self.currentState.evaluate()
+            output.append(nxt)
+            self.currentState = nxt
             n -= 1
         return output
