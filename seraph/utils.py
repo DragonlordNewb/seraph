@@ -228,3 +228,12 @@ class DataContainer:
 			setattr(self, key, kw[key])
 
 		self.__getitem__ = self.__getattribute__
+
+def dissolve(l):
+	output = []
+	for item in l:
+		if type(item) == list:
+			for x in dissolve(item):
+				output.append(x)
+		else:
+			output.append(item)

@@ -1,4 +1,5 @@
 from seraph import point
+from seraph import utils
 
 def hsv(h, s, v):
     if s == 0.0: v*=255; return (v, v, v)
@@ -51,8 +52,30 @@ class Edge:
     def __len__(self) -> int:
         return len(self.pixels)
 
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+
+    def __next__(self) -> Pixel:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self[self.n]
+
+    def __getitem__(self, index: int) -> Pixel:
+        return self.pixels[index]
+
+    def __contains__(self, target: Pixel) -> bool:
+        for pixel in self:
+            if pixel.location == target.location:
+                return True
+        return False
+
     def __lshift__(self, pixel: Pixel) -> None:
-        self.pixels.append(pixel)
+        if pixel not in self:
+            self.pixels.append(pixel)
+            return True
+        return False
 
 class Image:
     def __init__(self, pixels: list[list[Pixel]]) -> None:
@@ -67,8 +90,27 @@ class Image:
     def __repr__(self) -> str:
         return "<seraph.vision.Image " + str(self.width) + "x" + str(self.height) + ">"
 
+    def __iter__(self) -> object:
+        self.r = 0
+        self.c = -1
+        return self
+    
+    def __next__(self) -> Pixel:
+        self.c += 1
+        try:
+            return self.rows[self.r][self.c]
+        except IndexError:
+            try:
+                self.c = -1
+                self.r += 1
+                return next(self)
+            except IndexError:
+                raise StopIteration
+
     def __invert__(self) -> list[list[int]]:
         return [[~pixel for pixel in row] for row in self.rows]
 
     def neighbors(self, target: Pixel) -> list[Pixel]:
         return [pixel for pixel in self if pixel.location == target.location]
+
+    def mapEdges()
