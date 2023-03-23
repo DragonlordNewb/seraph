@@ -40,10 +40,10 @@ class Cluster:
 			ent = database.pop(currentIndex)
 			currentList.append(ent)
 			ebs = {ent % other: index for index, other in enumerate(database)}
-			if min(ebs.keys()) >= threshold:
+			if max(ebs.keys()) >= threshold:
 				output.append(Cluster(*currentList))
 				currentList = []
-			currentIndex = ebs[min(ebs.keys())]
+			currentIndex = ebs[max(ebs.keys())]
 
 		return output
 
