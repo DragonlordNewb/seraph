@@ -194,5 +194,17 @@ def optimize(string: str or Sentence, mode: NEGATIVITY or NEUTRALITY or POSITIVI
     original = string
 
     if type(mode) in [int, float]:
+        if mode < 0:
+            optimization = NEGATIVITY
+        elif mode > 0:
+            optimization = POSITIVITY
+        else:
+            optimization = NEUTRALITY
+
         for depth in range(maximumDepth):
             negativity, negatives, neutrality, neutrals, positivity, positives, compound = sentiment(string)
+
+            general = negativity + positivity
+
+            if general > 0:
+                pass
