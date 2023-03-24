@@ -25,9 +25,9 @@ with utils.Indent():
 	from nltk.corpus import opinion_lexicon
 	print("NLTK imported.")
 
-NEGATIVITY = "negativity"
-NEUTRALITY = "neutrality"
-POSITIVITY = "positivity"
+NEGATIVITY = NEGATIVE = "negativity"
+NEUTRALITY = NEUTRAL = "neutrality"
+POSITIVITY = POSITIVE = "positivity"
 
 def lemmas(string: str) -> list[object]:
 	output = []
@@ -37,7 +37,32 @@ def lemmas(string: str) -> list[object]:
 	return output
 
 def synonyms(string: str) -> list[str]:
-	
+    output = []
+    for lemma in lemmas(string):
+        for synonym in lemma.synonyms():
+            output.append(synonym.name())
+    return output
+
+def wordSentiment(string: str, depth: int=0) -> tuple[float, POSITIVE or NEGATIVE or NEUTRAL, list[tuple[str, int]]]:
+    wordlist = [(string, 1)]
+    for iteration in range(depth):
+        for word in wordlist:
+            for synonym in synonyms(word):
+                if synonym not in wordlist:
+                    wordlist.append((synonym, iteration))
+
+    sentiment = 0
+    for word, inverseWeight in wordlist:
+        sentiment += 1 / inverseWeight
+
+    if sentiment > 1:
+        indicator = POSITIVE
+    elif sentiment < 1:
+        indicator = NEGATIVE
+    else:
+        indicator = NEUTRAL
+
+    return (sentiment, indicator, wordlist)  
 
 def sentiment(string: str) -> tuple[float, list[str], float, float, list[str], float]:
 	"""

@@ -118,4 +118,5 @@ class Image:
 
     def mapEdges(self, threshold: int=256):
         poi = [pixel for pixel in self if ~pixel >= threshold]
-        
+
+        for poi in
