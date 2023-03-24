@@ -6,3 +6,8 @@ import nltk
 
 from nltk.corpus import wordnet
 from nltk.corpus import framenet
+from nltk.tag import pos_tag
+from nltk.tokenize import word_tokenize
+from nltk.tokenize import sent_tokenize
+from nltk.sentiment import vader
+from nltk.corpus import opinion_lexicon
