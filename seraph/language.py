@@ -73,7 +73,15 @@ def sentiment(string: str) -> tuple[float, list[str], float, float, list[str], f
 	"""
 	sid = vader.SentimentIntensityAnalyzer()
 	result = sid.polarity_scores(string)
-	return (result["neg"], [s for s in string if s in opinion_lexicon.negative()], result["neu"], result["pos"], [s for s in string if s in opinion_lexicon.positive()], result["compound"])
+	return (
+        result["neg"],
+        [s for s in string if s in opinion_lexicon.negative()], 
+        result["neu"], 
+        [s for s in string if not (s in opinion_lexicon.negative() or s in opinion_lexicon.positive())],
+        result["pos"], 
+        [s for s in string if s in opinion_lexicon.positive()], 
+        result["compound"]
+    )
 
 class TagGroup:
 	def __init__(self, *tags: list[str]):
@@ -121,7 +129,7 @@ class Tokenization(entity.Entity):
 		self.sentences = sent_tokenize(string)
 		self.words = word_tokenize(string)
 		self.pos = pos_tag(self.words)
-		self.negativity, self.negatives, self.neutrality, self.positivity, self.positives, self.compound = sentiment(string)
+		self.negativity, self.negatives, self.neutrality, self.neutrals, self.positivity, self.positives, self.compound = sentiment(string)
 		self.objects = [entity.ListProperty(linguisticTagGroups[tgid] >> self.pos, leniency=leniency, strictness=strictness) for tgid in tagGroupIDs]
 		entity.Entity.__init__(self,
 			entity.ListProperty(self.sentences, leniency=leniency, strictness=strictness),
@@ -144,4 +152,44 @@ class Tokenization(entity.Entity):
 def tokenize(string: str, leniency: int=10, strictness: float=0.8, tagGroupIDs: list[str]=list(linguisticTagGroups.keys())):
 	return Tokenization(string, leniency, strictness, tagGroupIDs)
 
-def optimize(string: str, mode: NEGATIVITY or NEUTRALITY or POSITIVITY) -> str:
+class Sentence:
+    def __init__(self, string: str) -> None:
+        self.tok = tokenize(string)
+        self.words = word_tokenize(string)
+        self.pointer = 0
+        self.negativity, self.negatives, self.neutrality, self.neutrals, self.positivity, self.positives, self.compound = sentiment(str(self))
+
+    def __repr__(self) -> str:
+        return "<seraph.language.Sentence \"" + str(self) + "\">"
+
+    def __str__(self) -> str:
+        return " ".join(self.words)
+
+    def __len__(self) -> int:
+        return len(self.words)
+
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+
+    def __next__(self) -> str:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self.words[self.n]
+
+    def __getitem__(self, index: int) -> object:
+        self.pointer = index
+        return self
+
+    def __lshift__(self, replacement: str) -> None:
+        self.words[self.pointer] = replacement
+
+def optimize(string: str or Sentence, mode: NEGATIVITY or NEUTRALITY or POSITIVITY or float or int, maximumDepth: int=100) -> str:
+    # probably one of the most overloaded functions i've written yet, lol
+
+    original = string
+
+    if type(mode) in [int, float]:
+        for depth in range(maximumDepth):
+        negativity, negatives, neutrality, neutrals, positivity, positives, compound = sentiment(string)
