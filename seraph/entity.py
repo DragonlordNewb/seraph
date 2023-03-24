@@ -133,7 +133,7 @@ class ListProperty(Property):
     keyingEnabled = True
 
     def similarity(self, other: Property) -> int or float:
-        return delta(self.leniency)(len(self), len(other))
+        return delta(self.leniency)(len(self), len(other)) * len([x for x in self if x in other.value]) * len([index for index in range(len(self)) if self.value[index] == other.value[index]])
 
 class MetalistProperty(Property):
     iterationEnabled = True
