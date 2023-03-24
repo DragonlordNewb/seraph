@@ -28,7 +28,7 @@ class Cluster:
 		if recursion:
 			packing = self.pack(threshold, 0)
 			result = []
-			for cluster in packing
+			for cluster in packing:
 				result.append(cluster.pack(threshold, recursion - 1))
 			return result
 		
