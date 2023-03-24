@@ -1,17 +1,6 @@
 from seraph import point
 from seraph import utils
 
-def hsv(h, s, v):
-    if s == 0.0: v*=255; return (v, v, v)
-    i = int(h*6.) # XXX assume int() truncates!
-    f = (h*6.)-i; p,q,t = int(255*(v*(1.-s))), int(255*(v*(1.-s*f))), int(255*(v*(1.-s*(1.-f)))); v*=255; i%=6
-    if i == 0: return (v, t, p)
-    if i == 1: return (q, v, p)
-    if i == 2: return (p, v, t)
-    if i == 3: return (p, q, v)
-    if i == 4: return (t, p, v)
-    if i == 5: return (v, p, q)
-
 class Pixel:
     def __init__(self, x: int, y: int, strictness: int or float=.8, **colors: dict[str: int]) -> None:
         self.colors = colors
@@ -44,9 +33,11 @@ class Pixel:
         return sum([self % neighbor for neighbor in self.parent.neighbors(self)])
 
 class Edge:
-    def __init__(self, pixel: Pixel) -> None:
+    def __init__(self, pixel: Pixel, strictness: int=0.8) -> None:
         pixel.edge = self
         self.pixels = [pixel]
+
+        self.strictness = strictness
 
     def __repr__(self) -> str:
         return "<seraph.vision.Edge of length " + str(len(self)) + ">"
@@ -73,12 +64,52 @@ class Edge:
                 return True
         return False
 
+    def __eq__(self, edge: object) -> int or float:
+        return self % edge <= self.strictness
+
     def __lshift__(self, pixel: Pixel) -> bool:
         if pixel not in self:
             pixel.edge = self
             self.pixels.append(pixel)
             return True
         return False
+
+    def __mod__(self, edge: object) -> int or float:
+        sim = 0
+        for point1 in self:
+            for point2 in edge:
+                sim += point1.location % point2.location
+        
+        return sim
+
+    def __invert__(self) -> ExpandedPointEntity:
+        return point.midpoint(self.points())
+
+    def points(self) -> list[point.ExpandedPointEntity]:
+        return [pixel.location for pixel in self]
+
+class Object:
+    # look, at least i'm not name-colliding the base "object" class.
+
+    def __init__(self, edges: list[Edge]) -> None:
+        self.edges = edges
+
+    def __repr__(self) -> str:
+        return "<seraph.vision.Object>"
+
+    def __len__(self) -> int:
+        return len(self.edges)
+
+    def __mod__(self, other: object) -> float:
+        if len(self) >= len(other):
+            return other % self
+        
+        matches = 0
+        for edge in self:
+            if edge in other:
+                matches += 1
+
+        return matches / len(self)
 
 class Image:
     def __init__(self, pixels: list[list[Pixel]]) -> None:
@@ -116,6 +147,24 @@ class Image:
     def neighbors(self, target: Pixel) -> list[Pixel]:
         return [pixel for pixel in self if pixel.location == target.location]
 
-    def mapEdges(self, threshold: int=256):
+    def mapEdges(self, threshold: int=256, strictness: int=1) -> list[Edge]:
         poi = [pixel for pixel in self if ~pixel >= threshold]
         
+        edges = []
+
+        def mapped(x):
+            for edge in edges:
+                if x in edge:
+                    return True
+            return False
+
+        for point in poi:
+            if not mapped(poi):
+                edge = Edge(point)
+                for otherPoint in poi:
+                    edge << otherPoint
+                self.edges.append(edge)
+
+        return edges
+
+    def mapObjects(self, threshold)

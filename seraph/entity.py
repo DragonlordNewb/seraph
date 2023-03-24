@@ -102,6 +102,12 @@ class IntProperty(Property):
     def similarity(self, other: Property) -> int or float:
         return delta(self.leniency)(int(self), int(other))
 
+    def __iadd__(self, val: int) -> None:
+        self.value += val
+
+    def __imul__(self, val: int) -> None:
+        self.value *= val
+
 class StrProperty(Property):
     strEnabled = True
     lenEnabled = True
