@@ -184,6 +184,9 @@ class Sentence:
 
     def __lshift__(self, replacement: str) -> None:
         self.words[self.pointer] = replacement
+        self.tok = tokenize(str(self))
+        self.pointer = 0
+        self.negativity, self.negatives, self.neutrality, self.neutrals, self.positivity, self.positives, self.compound = sentiment(str(self))
 
 def optimize(string: str or Sentence, mode: NEGATIVITY or NEUTRALITY or POSITIVITY or float or int, maximumDepth: int=100) -> str:
     # probably one of the most overloaded functions i've written yet, lol
@@ -192,4 +195,4 @@ def optimize(string: str or Sentence, mode: NEGATIVITY or NEUTRALITY or POSITIVI
 
     if type(mode) in [int, float]:
         for depth in range(maximumDepth):
-        negativity, negatives, neutrality, neutrals, positivity, positives, compound = sentiment(string)
+            negativity, negatives, neutrality, neutrals, positivity, positives, compound = sentiment(string)
