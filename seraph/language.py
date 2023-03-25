@@ -29,19 +29,29 @@ NEGATIVITY = NEGATIVE = "negativity"
 NEUTRALITY = NEUTRAL = "neutrality"
 POSITIVITY = POSITIVE = "positivity"
 
+def reprReview(s):
+	if s == NEGATIVITY:
+		return "negative"
+	if s == NEUTRALITY:
+		return "neutral"
+	return "positive"
+
 def lemmas(string: str) -> list[object]:
 	output = []
 	for ss in wordnet.synsets(string):
 		for lemma in ss.lemmas():
-			output.append(lemma)
+			output.append(lemma.name())
 	return output
 
-def synonyms(string: str) -> list[str]:
-    output = []
-    for lemma in lemmas(string):
-        for synonym in lemma.synonyms():
-            output.append(synonym.name())
-    return output
+def synonyms(string: str, depth: int=1) -> list[str]:
+	output = [string]
+	for iteration in range(depth):
+		newOutput = [x for x in output]
+		for word in output:
+			for synset in wordnet.synsets(word):
+				newOutput.append(synset.name().split(".")[0])
+		output = list(set(newOutput))
+	return output
 
 def wordSentiment(string: str, depth: int=0) -> tuple[float, POSITIVE or NEGATIVE or NEUTRAL, list[tuple[str, int]]]:
     wordlist = [(string, 1)]
@@ -64,6 +74,8 @@ def wordSentiment(string: str, depth: int=0) -> tuple[float, POSITIVE or NEGATIV
 
     return (sentiment, indicator, wordlist)  
 
+sid = vader.SentimentIntensityAnalyzer()
+
 def sentiment(string: str) -> tuple[float, list[str], float, float, list[str], float]:
 	"""
 	Use the VADER sentiment analysis tool to analyze a sentence.
@@ -71,17 +83,36 @@ def sentiment(string: str) -> tuple[float, list[str], float, float, list[str], f
 	neutrality of the sentence, the positivity of the sentence, positive words in the sentence,
 	and the modification by compounding, all as floats or lists of strings where applicable.
 	"""
-	sid = vader.SentimentIntensityAnalyzer()
+	global sid
+
 	result = sid.polarity_scores(string)
+	tk = word_tokenize(string)
 	return (
         result["neg"],
-        [s for s in string if s in opinion_lexicon.negative()], 
+        [s for s in tk if s in opinion_lexicon.negative()], 
         result["neu"], 
-        [s for s in string if not (s in opinion_lexicon.negative() or s in opinion_lexicon.positive())],
+        [s for s in tk if not (s in opinion_lexicon.negative() or s in opinion_lexicon.positive())],
         result["pos"], 
-        [s for s in string if s in opinion_lexicon.positive()], 
+        [s for s in tk if s in opinion_lexicon.positive()], 
         result["compound"]
     )
+
+class SentimentAnalysis:
+	def __init__(self, string: str, threshold: float=0.25):
+		self.negativity, self.negatives, self.neutrality, self.neutrals, self.positivity, self.positives, self.compound = sentiment(string)
+		self.overall = NEUTRAL
+		if self.compound > threshold:
+			self.overall = POSITIVE
+		if self.compound < -1 * threshold:
+			self.overall = NEGATIVE
+		self.string = string
+		self.words = word_tokenize(self.string)
+
+	def __repr__(self) -> str:
+		return "<seraph.language.SentimentAnalysis of \"" + str(self) + "\", overall sentiment: " + reprReview(self.overall) + ">"
+
+	def __str__(self) -> str:
+		return self.string
 
 class TagGroup:
 	def __init__(self, *tags: list[str]):

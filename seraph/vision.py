@@ -82,7 +82,7 @@ class Edge:
         
         return sim
 
-    def __invert__(self) -> ExpandedPointEntity:
+    def __invert__(self) -> point.ExpandedPointEntity:
         return point.midpoint(self.points())
 
     def points(self) -> list[point.ExpandedPointEntity]:
@@ -167,4 +167,5 @@ class Image:
 
         return edges
 
-    def mapObjects(self, threshold)
+    def mapObjects(self, threshold: int) -> None:
+        pass
