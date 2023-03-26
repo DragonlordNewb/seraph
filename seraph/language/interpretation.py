@@ -1,3 +1,5 @@
+from nltk import word_tokenize
+from nltk import pos_tag
 from nltk import chunk
 from nltk.corpus import wordnet
 
@@ -6,8 +8,9 @@ from seraph.language import tokenization
 BRANCH = "branch"
 
 class SyntaxTree:
-    def __init__(self, *sequence: list[tuple[str, str] or object]) -> None:
+    def __init__(self, label: str, *sequence: list[tuple[str, str] or object]) -> None:
         self.sequence = sequence
+        self.label = label
 
     def __repr__(self) -> str:
         return "<seraph.language.interpretation.SyntaxTree of length " + str(len(self)) + ">"
@@ -29,3 +32,12 @@ class SyntaxTree:
             return (nxt, BRANCH)
         return nxt
 
+    def __iadd__(self, other) -> None:
+        self.
+
+def makeSyntaxTree(string: str) -> SyntaxTree:
+    words = word_tokenize(string)
+    pos = pos_tag(words)
+    tree = chunk.ne_chunk(pos) # may take a sec
+
+    finalSeq = 
