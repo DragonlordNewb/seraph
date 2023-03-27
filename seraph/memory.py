@@ -8,6 +8,11 @@ class Memory(unification.Asset):
     def __repr__(self) -> str:
         return "<seraph.memory.Memory of with clarity " + str(~self) + ">"
 
+    def __mod__(self, other: object) -> int or float:
+        sk = [key for key in self.keys if key in other.keys]
+        ok = [key for key in other.keys if key in self.keys]
+        return (2 ** ~self) * (2 ** ~other) * sum([1 for key1, key2 in zip(sk, ok) if self.entities[key1] == other.entities[key2]])
+
     def __invert__(self) -> int or float:
         return self.clarity
 
