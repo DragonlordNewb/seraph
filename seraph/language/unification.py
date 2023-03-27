@@ -41,11 +41,16 @@ class Asset(utils.Makeable):
     def __contains__(self, other: _entity.Entity) -> bool:
         return other in self.keys or other in self.values
 
+    def __mod__(self, other: object) -> int or float:
+        sk = [key for key in self.keys if key in other.keys]
+        ok = [key for key in other.keys if key in self.keys]
+        return sum([1 for key1, key2 in zip(sk, ok) if self.entities[key1] == other.entities[key2]])
+
     def __eq__(self, other: object) -> bool:
         if len(self) != len(other):
             return False
         for key, value in self:
-            if not ( other[key] == value):
+            if not (other[key] == value):
                 return False
         return True
 
