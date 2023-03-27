@@ -5,10 +5,15 @@ class Pattern:
         self.entities = entities
 
 class Context:
-    def __init__(self, *patterns: list[Pattern], strictness: int=.8, selfImprove: bool=False) -> None:
+    def __init__(self, *patterns: list[Pattern], strictness: int=.8) -> None:
         self.patterns = list(entities)
+        self.strictness = strictness
         
-    def __repr__
+    def __repr__(self) -> str:
+        pass
+
+    def __len__(self) -> int:
+        return len(self.patterns)
    
     def __iter__(self) -> object:
         self.n = -1
@@ -18,52 +23,50 @@ class Context:
         self.n += 1
         if self.n >= len(self):
             raise StopIteration
-        return self.entities[self.n]
+        return self.patterns[self.n]
 
     def __getitem__(self, identifier: int or object) -> object:
         if type(identifier) == int:
-            return self.entities[identifier]
-        elif type(identifier) == Entity:
-            return self.mostSimilarEntity(identifier)
+            return self.patterns[identifier]
+        elif type(identifier) == Pattern:
+            return self.mostSimilarPattern(identifier)
 
-    def __contains__(self, entity: Entity) -> bool:
-        output = self % entity >= self.strictness
-        if output and self.selfImprove:
-            self += entity
+    def __contains__(self, pattern: Pattern) -> bool:
+        output = self % pattern >= self.strictness
         return output
 
-    def __mod__(self, entity: Entity) -> int:
-        return self.similarity(entity)
+    def __mod__(self, pattern: Pattern) -> int:
+        return self.similarity(pattern)
 
-    def __iadd__(self, entity: Entity or list[Entity]) -> None:
-        if type(entity) == list:
-            for ent in entity:
-                self += ent
+    def __iadd__(self, pattern: pattern or list[Pattern]) -> None:
+        if type(pattern) == list:
+            for patt in pattern:
+                self += patt
         else:
-            self.entities.append(entity)
+            self.patterns.append(pattern)
 
-    def contains(self, entity: Entity) -> bool:
-        return entity in self.entities
+    def contains(self, pattern: Pattern) -> bool:
+        return pattern in self.patterns
 
     def similarity(self, entity: Entity) -> int:
         return sum([ent % entity for ent in self])
 
-    def entitiesBySimilarity(self, entity: Entity) -> dict[int or float: Entity]:
+    def patternsBySimilarity(self, pattern: Entity) -> dict[int or float: Entity]:
         output = {}
-        for ent in self:
-            output[ent % entity] = ent
+        for patt in self:
+            output[patt % pattern] = patt
         return output
 
-    def similaritiesByEntity(self, entity: Entity) -> dict[Entity: int or float]:
+    def similaritiesByPattern(self, pattern: Pattern) -> dict[Entity: int or float]:
         output = {}
-        for ent in self:
-            output[ent] = ent % entity
+        for patt in self:
+            output[patt] = patt % pattern
         return output
 
-    def mostSimilarEntity(self, entity: Entity) -> tuple[int or float, Entity]:
-        ebs = self.entitiesBySimilarity(entity)
-        maximum = max(ebs.keys())
-        return maximum, ebs[maximum]
+    def mostSimilarPattern(self, entity: Entity) -> tuple[int or float, Entity]:
+        pbs = self.patternsBySimilarity(entity)
+        maximum = max(bs.keys())
+        return maximum, pbs[maximum]
 
     def highestSimilarity(self, entity: Entity) -> Entity:
         ebs = self.entitiesBySimilarity(entity)
