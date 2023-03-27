@@ -15,4 +15,13 @@ def getHypernyms(ss: Synset, depth: int=5) -> list[Synset]:
 					
 	return output
 
-def getHyponyms(ss: Synset, depth)
+def getHyponyms(ss: Synset, depth: int=5) -> list[Synset]:
+	output = ss.hyponyms()
+
+	for _ in range(depth):
+		for hypo in output:
+			for newHyponym in hypo.hyponyms():
+				if newHyponym not in output:
+					output.append(newHyponym)
+
+	return output
