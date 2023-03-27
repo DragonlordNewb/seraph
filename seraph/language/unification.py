@@ -1,7 +1,8 @@
 from seraph import entity as _entity
+from seraph import reaction as _reaction
 from seraph import utils
 
-class Asset:
+class Asset(utils.Makeable):
     requirements = []
 
     def __init__(self, **entities: dict[str: _entity.Entity]) -> None:
@@ -58,16 +59,26 @@ class Asset:
         self.entites.update(other)
 
     @staticmethod
-    def formulateSubasset(name: str, reqs: list[str]) -> object:
-        class Subasset(Asset):
-            __name__ = name
+    def formulateSubasset(parent: object, name: str, newRequirements: list[str], override: bool=True) -> object:
+        if override:
+            reqs = newRequirements
+        else:
+            reqs = []
+            for item in self.requirements:
+                reqs.append(item)
+            for item in newRequirements:
+                reqs.append(item)
+
+        class Subasset(type(self)):
+            __name__ = __qualname__ = name
             requirements = reqs
 
         return Subasset
 
-Object = Asset.formulateSubasset("Object", []) # existence (really just some data points)
-Location = Asset.formulateSubasset("Location", ["latitude", "longitude", "contains"]) # space (really just a set of axes)
-Event = Asset.formulateSubasset("Event", ["epoch", "location", "participants", "actions"]) # time (really just another axis)
+Object = Asset.formulateSubasset(Asset, "Object", ["name"], True) # existence (really just some data points)
+Location = Asset.formulateSubasset(Object, "Location", ["latitude", "longitude", "contains"], False) # space (really just a set of axes)
+Event = Asset.formulateSubasset(Asset, "Event", ["epoch", "location", "participants", "actions"], True) # time (really just another axis)
+Action = Event.formulateSubasset(Event, "Action", ["epoch", "location", "actor", "action", "actee"], True)
 
 class Metric:
     def __repr__(self) -> str:
