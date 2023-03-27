@@ -41,4 +41,31 @@ class MemoryFile:
 
 class MemoryDrive:
     def __init__(self) -> None:
-        self.files = []
+        self.memories = []
+
+    def __repr__(self) -> str:
+        return "<seraph.memory.MemoryDrive of length " + str(len(self)) + ">"
+
+    def __len__(self) -> int:
+        return len(self.memories)
+
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+
+    def __next__(self) -> Memory:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self.memories[self.n]
+
+    def __lshift__(self, memory: Memory) -> None:
+        self.memories.append(memory)
+
+    def __rshift__(self, memory: Memory) -> None:
+        self << memory
+        mbs = self.memoriesBySimilarity(memory)
+        return mbs[max(mbs.keys())]
+
+    def memoriesBySimilarity(self, memory: Memory) -> dict[int: Memory]:
+        return {memory % mem: mem for mem in self}
