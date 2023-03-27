@@ -29,6 +29,9 @@ NEGATIVITY = NEGATIVE = "negativity"
 NEUTRALITY = NEUTRAL = "neutrality"
 POSITIVITY = POSITIVE = "positivity"
 
+def reform(tok: list[tuple[str, str]]) -> str:
+	return " ".join([s for s, t in tok])
+
 def reprReview(s):
 	if s == NEGATIVITY:
 		return "negative"
