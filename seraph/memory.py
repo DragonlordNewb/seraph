@@ -1,18 +1,71 @@
 from seraph import entity as _entity
 from seraph import reaction as _reaction
+from seraph import unification
 
-class Memory:
-    def __init__(self, arp: _reaction.ActionReactionPair) -> None:
-        self.actions = arp.actions
-        self.reactions = arp.reactions
-        self.pair = arp
-        self.clarity = 0
+class Memory(unification.Asset):
+    clarity = 0
 
     def __repr__(self) -> str:
-        return "<seraph.memory.Memory of " + repr(self.pair) + ">"
+        return "<seraph.memory.Memory of with clarity " + str(~self) + ">"
 
-    def _
+    def __mod__(self, other: object) -> int or float:
+        sk = [key for key in self.keys if key in other.keys]
+        ok = [key for key in other.keys if key in self.keys]
+        return (2 ** ~self) * (2 ** ~other) * sum([1 for key1, key2 in zip(sk, ok) if self.entities[key1] == other.entities[key2]])
+
+    def __invert__(self) -> int or float:
+        return self.clarity
+
+class MemoryFile:
+    def __init__(self, *memories: list[Memory]) -> None:
+        self.memories = list(memories)
+        self.clarity = sum([~mem for mem in self])
+
+    def __repr__(self) -> str:
+        if len(self) > 10:
+            return "<seraph.memory.MemoryFile of length " + str(len(self)) + " (too many to display)>"
+        return "<seraph.memory.MemoryFile containing " + ", ".join([repr(mem) for mem in self]) + ">"
+
+    def __len__(self) -> int:
+        return len(self.memories)
+
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+
+    def __next__(self) -> Memory:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self.memories[self.n]
 
 class MemoryDrive:
     def __init__(self) -> None:
-        self.memories = 
+        self.memories = []
+
+    def __repr__(self) -> str:
+        return "<seraph.memory.MemoryDrive of length " + str(len(self)) + ">"
+
+    def __len__(self) -> int:
+        return len(self.memories)
+
+    def __iter__(self) -> object:
+        self.n = -1
+        return self
+
+    def __next__(self) -> Memory:
+        self.n += 1
+        if self.n >= len(self):
+            raise StopIteration
+        return self.memories[self.n]
+
+    def __lshift__(self, memory: Memory) -> None:
+        self.memories.append(memory)
+
+    def __rshift__(self, memory: Memory) -> None:
+        self << memory
+        mbs = self.memoriesBySimilarity(memory)
+        return mbs[max(mbs.keys())]
+
+    def memoriesBySimilarity(self, memory: Memory) -> dict[int: Memory]:
+        return {memory % mem: mem for mem in self}

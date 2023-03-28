@@ -83,7 +83,7 @@ class StateMachine:
             raise SyntaxError("Must either subclass a operate method onto the StateMachine or supply a function at init.")
         
         # unit test on the operation function
-        if not issubclass(type(self.operate(self.state))):
+        if not issubclass(type(self.operate(self.state)), State):
             raise TypeError("Operate function (however it was inputted) does not return a State object.")
 
     def __repr__(self) -> str:
