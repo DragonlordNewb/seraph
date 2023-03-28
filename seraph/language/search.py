@@ -15,4 +15,5 @@ def getHypernyms(ss: Synset, depth: int=5) -> list[Synset]:
 					
 	return output
 
-def getHyponyms(ss: Synset, depth)
+def getHyponyms(ss: Synset, depth):
+	pass
