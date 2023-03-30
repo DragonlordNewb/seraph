@@ -75,3 +75,7 @@ class Axon:
         elif origin == self.back:
             self.front << value * self.weight
             self.weight /= value
+
+class Layer:
+    def __init__(self, neurons):
+        pass
