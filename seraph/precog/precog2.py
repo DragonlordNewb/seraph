@@ -64,7 +64,7 @@ class PatternRecognitionEngine:
 
 		self.pattern.append(item)
 
-	def __rshift__(self, strictness: int=0.25) -> Pattern:
+	def __rshift__(self, strictness: int=0.25) -> list[tuple[Pattern, float]]:
 		patterns: list[tuple[Pattern, float]] = [] # (pattern, confidence) pairs
 		for index in range(1, min(len(self), maxlength), -1):
 			# assemble blocks
