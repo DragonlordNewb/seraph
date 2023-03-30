@@ -29,9 +29,10 @@ class Property(utils.Summarizable, utils.Manufacturable, Differentiable):
     iterationEnabled = False
     keyingEnabled = False
     lenEnabled = False
+    default = None
 
-    def __init__(self, value: any, leniency: int=10, strictness: int=.8) -> None:
-        self.value = value
+    def __init__(self, value: any=None, leniency: int=10, strictness: int=.8) -> None:
+        self.value = value or self.default
         self.leniency = leniency
         self.strictness = strictness
 
@@ -98,6 +99,7 @@ class Property(utils.Summarizable, utils.Manufacturable, Differentiable):
 
 class IntProperty(Property):
     intEnabled = True
+    default = 0
 
     def similarity(self, other: Property) -> int or float:
         return delta(self.leniency)(int(self), int(other))
@@ -111,6 +113,7 @@ class IntProperty(Property):
 class StrProperty(Property):
     strEnabled = True
     lenEnabled = True
+    default = ""
 
     def similarity(self, other: Property) -> int or float:
         shared = [x for x in str(self) if x in str(other)]
@@ -131,6 +134,7 @@ class ListProperty(Property):
     iterationEnabled = True
     lenEnabled = True
     keyingEnabled = True
+    default = []
 
     def similarity(self, other: Property) -> int or float:
         return delta(self.leniency)(len(self), len(other)) * len([x for x in self if x in other.value]) * len([index for index in range(len(self)) if self.value[index] == other.value[index]])
@@ -139,6 +143,7 @@ class MetalistProperty(Property):
     iterationEnabled = True
     lenEnabled = True
     keyingEnabled = True
+    default = []
 
     def similarity(self, other: Property) -> int or float:
         return sum([self[index] % other[index] for index in range(len(self))])
