@@ -4,6 +4,7 @@ from math import exp
 
 FEEDFORWARD = "feedforward"
 BACKPROPAGATION = "backpropagation"
+LEARNING_RATE = 0.01
 
 def sigmoid(x):
     return 1 / (1 + exp(-x))
@@ -41,8 +42,10 @@ class Neuron:
             axons = self.inputAxons
         else:
             raise RuntimeError("Bad mode " + str(self.mode) + ".")
-        for axon in self.outputAxons:
-            axon << (value or self.output, self)
+        value = value or self.output
+        for axon in axons:
+            axon << (value, self)
+            self.bias -= value * LEARNING_RATE
 
     def __mod__(self, expected: Union[float, int]) -> Union[float, int]:
         """Compute the neuron's error as a percent."""
@@ -106,7 +109,7 @@ class Axon:
             self.back << value * self.weight
         elif origin == self.back:
             self.front << value * self.weight
-            self.weight += value / self.weight
+            self.weight -= value * LEARNING_RATE * self.weight
         else:
             raise RuntimeError("Origin must be the front or back of the Axon.")
 
@@ -191,11 +194,14 @@ class NeuralCrystal:
         return errors
 
     def transform(self, inputs: list[Union[int, float]], iterations: int=1) -> list[Union[int, float]]:
+        """Transform the data (higher level function)."""
+        self.clear()
         self << inputs
         return self | iterations
 
     def learn(self, inputs: list[Union[int, float]], expected: list[Union[int, float]], iterations: int=1) -> Union[int, float]:
         """Learn from mistakes and return the factor of improvement."""
+        self.clear()
         self << inputs
         self | iterations
         initialErrors = self >> expected
@@ -209,6 +215,7 @@ class NeuralCrystal:
              epochs: int=100) -> list[Union[int, float]]:
         """Train the neural crystal on an input and output dataset."""
         errorsOverTime = []
+        self.clear()
         for _ in range(epochs):
             for i, o in zip(inputDataset, expectedDataset):
                 errorsOverTime.append(self.learn(i, o, iterations))
