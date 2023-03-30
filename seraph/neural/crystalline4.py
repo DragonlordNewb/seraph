@@ -199,10 +199,10 @@ class NeuralCrystal:
         return sum([initialError - improvedError for initialError, improvedError in zip(initialErrors, improvedErrors)])
 
     def train(self, 
-            inputDataset: list[list[Union[int, float]]], 
-            expectedDataset: list[list[Union[int, float]]], 
-            iterations: int=1, 
-            epochs: int=100) -> list[Union[int, float]]:
+             inputDataset: list[list[Union[int, float]]], 
+             expectedDataset: list[list[Union[int, float]]], 
+             iterations: int=1, 
+             epochs: int=100) -> list[Union[int, float]]:
         """Train the neural crystal on an input and output dataset."""
         errorsOverTime = []
         for _ in range(epochs):
