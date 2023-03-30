@@ -14,8 +14,8 @@ with utils.Indent():
 	from seraph import simulation
 	print("Importing entity ...")
 	from seraph import entity
-	print("Importing seraph ...")
-	from seraph import seraph
+	# print("Importing seraph ...")
+	# from seraph import seraph
 	print("Importing reaction ...")
 	from seraph import reaction
 	print("Importing tests ...")

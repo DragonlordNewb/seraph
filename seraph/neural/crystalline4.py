@@ -19,7 +19,7 @@ class Neuron:
 
     def __init__(self, bias: Union[float, int, None]=None) -> None:
         self.inputAxons: list[Axon] = []
-        self.outputAxons: list[Axon]
+        self.outputAxons: list[Axon] = []
         self.inputs: list[float] = []
         self.output: float = 0
         self.bias: Union[float, int] = bias or random()
@@ -190,6 +190,10 @@ class NeuralCrystal:
 
         return errors
 
+    def transform(self, inputs: list[Union[int, float]], iterations: int=1) -> list[Union[int, float]]:
+        self << inputs
+        return self | iterations
+
     def learn(self, inputs: list[Union[int, float]], expected: list[Union[int, float]], iterations: int=1) -> Union[int, float]:
         """Learn from mistakes and return the factor of improvement."""
         self << inputs
@@ -210,4 +214,9 @@ class NeuralCrystal:
                 errorsOverTime.append(self.learn(i, o, iterations))
 
         return errorsOverTime
+
+    def clear(self) -> None:
+        """Clear the network."""
+        for neuron in self:
+            neuron.clear()
         
