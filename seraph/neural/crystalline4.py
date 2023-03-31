@@ -48,8 +48,8 @@ class Neuron:
             self.bias -= value * LEARNING_RATE
 
     def __mod__(self, expected: Union[float, int]) -> Union[float, int]:
-        """Compute the neuron's error as a percent."""
-        return (self.output - expected) / expected
+        """Compute the neuron's error."""
+        return self.output - expected
 
     def __invert__(self) -> None:
         """Compute the neuron's output value."""

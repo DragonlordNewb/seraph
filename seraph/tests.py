@@ -49,3 +49,15 @@ def test_03():
 	from seraph.neural import feedforward2 as ff 
 
 	nn = ff.FeedforwardNeuralNetwork(3, 5, 5, 5, 5, 5, 3)
+
+def test_04():
+	from seraph.neural import crystalline4
+	c = crystalline4.NeuralCrystal()
+	inp = ([0, 1] * 12) + [0]
+	out = ([0, 1] * 12) + [1]
+	print(c.transform(inp, 5))
+	print()
+	x = c.train([inp], [out], 5)
+	print(c.transform(inp, 5))
+	print()
+	print(x)
